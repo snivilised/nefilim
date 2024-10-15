@@ -1,4 +1,4 @@
-module snivilised.com/nefilim
+module github.com/snivilised/nefilim
 
 go 1.23.0
 
