@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing/fstest"
+
+	nef "github.com/snivilised/nefilim"
 )
 
 type (
@@ -73,4 +75,10 @@ func (f *makeDirMapFS) MakeDirAll(path string, perm os.FileMode) error {
 	}
 
 	return nil
+}
+
+func (f *makeDirMapFS) Ensure(as nef.PathAs,
+) (at string, err error) {
+	_ = as
+	panic("NOT-IMPL: makeDirMapFS.Ensure")
 }

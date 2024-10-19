@@ -12,6 +12,12 @@ type (
 		Destination string
 	}
 
+	Ensure struct {
+		Home    string
+		Default Pair
+		Log     Pair
+	}
+
 	Pair struct {
 		File      string
 		Directory string
@@ -45,6 +51,7 @@ type (
 	StaticFs struct {
 		Copy     Copy
 		Create   Create
+		Ensure   Ensure
 		Existing Pair
 		MakeDir  MakeDir
 		Move     Move
@@ -77,6 +84,17 @@ var (
 			},
 			Create: Create{
 				Destination: "scratch/pictures-of-you.CREATE.txt",
+			},
+			Ensure: Ensure{
+				Home: "home/marina",
+				Default: Pair{
+					File:      "scratch/home/marina/logs/default-test.log",
+					Directory: "scratch/home/marina/logs",
+				},
+				Log: Pair{
+					File:      "scratch/home/marina/logs/test.log",
+					Directory: "scratch/home/marina/logs",
+				},
 			},
 			Existing: Pair{
 				File:      "data/fS/paradise-lost.txt",
