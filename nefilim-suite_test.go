@@ -143,6 +143,10 @@ func Repo(relative string) string {
 	return Path(repo, relative)
 }
 
+func Join(segments ...string) string {
+	return strings.Join(segments, "/")
+}
+
 func Normalise(p string) string {
 	return strings.ReplaceAll(p, "/", string(filepath.Separator))
 }

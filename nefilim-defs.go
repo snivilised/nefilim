@@ -49,11 +49,31 @@ type (
 		ReadFileFS
 	}
 
+	// PathAs used with Ensure to define how to ensure that a path exists
+	// at the location specified
+	PathAs struct {
+		Name    string
+		Default string
+		Perm    os.FileMode
+		AsFile  bool
+	}
+
 	// MakeDirFS is a file system with a MkDirAll method.
 	MakeDirFS interface {
 		ExistsInFS
 		MakeDir(name string, perm os.FileMode) error
 		MakeDirAll(name string, perm os.FileMode) error
+		// Ensure makes sure that a path exists (PathAs.Name). If the path exists
+		// as a file then no directories need to be created and this file name
+		// (PathAs.Name) is returned. If the path exists as a directory, then again
+		// no directories are created, but the default (PathAs.Default) is returned.
+		//
+		// If the path does not exist, then 1 of 2 things can happen. If PathAs.AsFile
+		// is set to true, then the parent of the path is created, and file portion
+		// of the path is returned. When PathAs.AsFile is not set, ie the path
+		// provided is to be interpreted as a directory, then this directory is
+		// created and the default is returned.
+		Ensure(as PathAs) (string, error)
 	}
 
 	// MoveFS

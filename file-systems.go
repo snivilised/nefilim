@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // 🔥 An important note about using standard golang file systems (io.fs/fs.FS)
@@ -254,6 +255,48 @@ func (f *makeDirAllFS) MakeDirAll(name string, perm os.FileMode) error {
 	return os.MkdirAll(path, perm)
 }
 
+// EnsurePathAt ensures that the specified path exists (including any non
+// existing intermediate directories). Given a path and a default filename,
+// the specified path is created in the following manner:
+// - If the path denotes a file (path does not end is a directory separator), then
+// the parent folder is created if it doesn't exist on the file-system provided.
+// - If the path denotes a directory, then that directory is created.
+//
+// The returned string represents the file, so if the path specified was a
+// directory path, then the defaultFilename provided is joined to the path
+// and returned, otherwise the original path is returned un-modified.
+// Note: filepath.Join does not preserve a trailing separator, therefore to make sure
+// a path is interpreted as a directory and not a file, then the separator has
+// to be appended manually onto the end of the path.
+func (f *makeDirAllFS) Ensure(as PathAs,
+) (at string, err error) {
+	if !fs.ValidPath(as.Name) {
+		return "", NewInvalidPathError(as.Name)
+	}
+
+	var (
+		file string
+	)
+
+	if f.FileExists(as.Name) {
+		_, file = filepath.Split(as.Name)
+
+		return file, nil
+	}
+
+	if f.DirectoryExists(as.Name) {
+		return as.Default, nil
+	}
+
+	if as.AsFile {
+		directory, file := SplitParent(as.Name)
+
+		return file, f.MakeDirAll(directory, as.Perm)
+	}
+
+	return as.Default, f.MakeDirAll(as.Name, as.Perm)
+}
+
 // 🎯 removeFS
 
 type removeFS struct {
@@ -500,4 +543,8 @@ func compose(root string) *entities {
 		exists: exists,
 		reader: reader,
 	}
+}
+
+func join(segments ...string) string {
+	return strings.Join(segments, "/")
 }

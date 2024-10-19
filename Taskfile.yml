@@ -64,7 +64,7 @@ tasks:
     cmds:
       - go test ./collections
 
-  tt:
+  tn:
     cmds:
       - go test
 
