@@ -78,6 +78,14 @@ type (
 
 	// MoveFS
 	MoveFS interface {
+		Move(from, to string) error
+	}
+
+	// MoverFS
+	MoverFS interface {
+		MoveFS
+		ExistsInFS
+		fs.StatFS
 	}
 
 	// CopyFS
@@ -130,6 +138,5 @@ type (
 	UniversalFS interface {
 		ReaderFS
 		WriterFS
-		Move(from, to string) error
 	}
 )
