@@ -31,7 +31,7 @@ type (
 
 	baseMover struct {
 		root    string
-		fS      UniversalFS
+		fS      MoverFS
 		actions movers
 	}
 )
@@ -120,7 +120,7 @@ type lazyMover struct {
 	mover mover
 }
 
-func (l *lazyMover) instance(root string, overwrite bool, fS UniversalFS) mover {
+func (l *lazyMover) instance(root string, overwrite bool, fS MoverFS) mover {
 	l.once.Do(func() {
 		l.mover = l.create(root, overwrite, fS)
 	})
@@ -128,7 +128,7 @@ func (l *lazyMover) instance(root string, overwrite bool, fS UniversalFS) mover 
 	return l.mover
 }
 
-func (l *lazyMover) create(root string, overwrite bool, fS UniversalFS) mover {
+func (l *lazyMover) create(root string, overwrite bool, fS MoverFS) mover {
 	return lo.TernaryF(overwrite,
 		func() mover {
 			return &overwriteMover{

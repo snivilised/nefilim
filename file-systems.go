@@ -406,7 +406,24 @@ func NewReaderFS(at At) ReaderFS {
 
 // 🎯 moverFS
 type moverFS struct {
+	*baseWriterFS
 	mover lazyMover
+}
+
+// Move is similar to rename but it has distinctly different semantics, which
+// also varies depending on whether the file system was created with overwrite
+// enabled or not.
+// When overwrite is enabled, a move with overwrite the destination. If not
+// enabled, Move will return as error (os.ErrExist).
+// The paths denoted by from and to must be in different locations, otherwise
+// the move amounts to a rename and the client should use Rename instead of
+// move. When this scenario is detected, an error is returned.
+func (f *moverFS) Move(from, to string) error {
+	return f.mover.instance(
+		f.existsInFS.queryStatusFS.statFS.root,
+		f.overwrite,
+		f,
+	).move(from, to)
 }
 
 // 🎯 writerFS
@@ -429,18 +446,6 @@ func NewWriterFS(at At) WriterFS {
 type mutatorFS struct {
 	*readerFS
 	*writerFS
-}
-
-// Move is similar to rename but it has distinctly different semantics, which
-// also varies depending on whether the file system was created with overwrite
-// enabled or not.
-// When overwrite is enabled, a move with overwrite the destination. If not
-// enabled, Move will return as error (os.ErrExist).
-// The paths denoted by from and to must be in different locations, otherwise
-// the move amounts to a rename and the client should use Rename instead of
-// move. When this scenario is detected, an error is returned.
-func (f *mutatorFS) Move(from, to string) error {
-	return f.mover.instance(f.baseWriterFS.root, f.overwrite, f).move(from, to)
 }
 
 func NewTraverseFS(at At) TraverseFS {
@@ -479,6 +484,11 @@ type (
 )
 
 func (e *entities) mutator(overwrite bool) *entities {
+	writer := &baseWriterFS{
+		existsInFS: &e.exists,
+		openFS:     &e.open,
+		overwrite:  overwrite,
+	}
 	e.writer = writerFS{
 		copyFS: &copyFS{
 			openFS: &e.open,
@@ -486,7 +496,9 @@ func (e *entities) mutator(overwrite bool) *entities {
 		makeDirAllFS: &makeDirAllFS{
 			existsInFS: &e.exists,
 		},
-		moverFS: &moverFS{},
+		moverFS: &moverFS{
+			baseWriterFS: writer,
+		},
 		removeFS: &removeFS{
 			openFS: &e.open,
 		},
@@ -494,11 +506,7 @@ func (e *entities) mutator(overwrite bool) *entities {
 			openFS: &e.open,
 		},
 		writeFileFS: &writeFileFS{
-			baseWriterFS: &baseWriterFS{
-				existsInFS: &e.exists,
-				openFS:     &e.open,
-				overwrite:  overwrite,
-			},
+			baseWriterFS: writer,
 		},
 	}
 
