@@ -61,7 +61,7 @@ var (
 	fakeAbsParent = filepath.Join(string(filepath.Separator), "home", "rabbitweed", "music")
 )
 
-func scratch(root string) {
+func scratch(root string) { // should we re-create scratch too, so the tests don't have to?
 	scratchPath := filepath.Join(root, lab.Static.FS.Scratch)
 
 	if _, err := os.Stat(scratchPath); err == nil {
@@ -168,8 +168,20 @@ func IsLinkError(err error, reason string) {
 	Expect(errors.As(err, &linkErr)).To(BeTrue(), fmt.Sprintf("not LinkError, %q", reason))
 }
 
-func IsSameDirMoveRejectionError(err error, reason string) {
+func IsInvalidPathError(err error, reason string) {
+	Expect(nef.IsInvalidPathError(err)).To(BeTrue(),
+		fmt.Sprintf("not NewInvalidPathError, %q", reason),
+	)
+}
+
+func IsSameDirectoryMoveRejectionError(err error, reason string) {
 	Expect(nef.IsRejectSameDirMoveError(err)).To(BeTrue(),
-		fmt.Sprintf("not SameDirMoveRejectionError, %q", reason),
+		fmt.Sprintf("not SameDirectoryMoveRejectionError, %q", reason),
+	)
+}
+
+func IsDifferentDirectoryChangeRejectionError(err error, reason string) {
+	Expect(nef.IsRejectDifferentDirChangeError(err)).To(BeTrue(),
+		fmt.Sprintf("not DifferentDirectoryChangeRejectionError, %q", reason),
 	)
 }

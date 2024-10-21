@@ -88,6 +88,16 @@ type (
 		fs.StatFS
 	}
 
+	ChangeFS interface {
+		Change(from, to string) error
+	}
+
+	ChangerFS interface {
+		ChangeFS
+		ExistsInFS
+		fs.StatFS
+	}
+
 	// CopyFS
 	CopyFS interface {
 		Copy(from, to string) error
@@ -117,6 +127,7 @@ type (
 
 	// WriterFS
 	WriterFS interface {
+		ChangeFS
 		CopyFS
 		ExistsInFS
 		MakeDirFS

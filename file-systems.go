@@ -215,7 +215,7 @@ type makeDirAllFS struct {
 
 // NewMakeDirFS
 func NewMakeDirFS(at At) MakeDirFS {
-	ents := compose(sanitise(at.Root)).mutator(at.Overwrite)
+	ents := compose(sanitise(at.Root)).mutate(at.Overwrite)
 
 	return &ents.writer
 }
@@ -341,7 +341,7 @@ type writeFileFS struct {
 }
 
 func NewWriteFileFS(at At) WriteFileFS {
-	ents := compose(sanitise(at.Root)).mutator(at.Overwrite)
+	ents := compose(sanitise(at.Root)).mutate(at.Overwrite)
 
 	return &ents.writer
 }
@@ -404,10 +404,11 @@ func NewReaderFS(at At) ReaderFS {
 	return &ents.reader
 }
 
-// 🎯 moverFS
-type moverFS struct {
+// 🎯 aggregatorFS
+type aggregatorFS struct {
 	*baseWriterFS
-	mover lazyMover
+	mover   lazyMover
+	changer lazyChanger
 }
 
 // Move is similar to rename but it has distinctly different semantics, which
@@ -418,7 +419,7 @@ type moverFS struct {
 // The paths denoted by from and to must be in different locations, otherwise
 // the move amounts to a rename and the client should use Rename instead of
 // move. When this scenario is detected, an error is returned.
-func (f *moverFS) Move(from, to string) error {
+func (f *aggregatorFS) Move(from, to string) error {
 	return f.mover.instance(
 		f.existsInFS.queryStatusFS.statFS.root,
 		f.overwrite,
@@ -426,18 +427,26 @@ func (f *moverFS) Move(from, to string) error {
 	).move(from, to)
 }
 
+func (f *aggregatorFS) Change(from, to string) error {
+	return f.changer.instance(
+		f.existsInFS.queryStatusFS.statFS.root,
+		f.overwrite,
+		f,
+	).change(from, to)
+}
+
 // 🎯 writerFS
 type writerFS struct {
 	*copyFS
 	*makeDirAllFS
-	*moverFS
+	*aggregatorFS
 	*removeFS
 	*renameFS
 	*writeFileFS
 }
 
 func NewWriterFS(at At) WriterFS {
-	ents := compose(sanitise(at.Root)).mutator(at.Overwrite)
+	ents := compose(sanitise(at.Root)).mutate(at.Overwrite)
 
 	return &ents.writer
 }
@@ -448,8 +457,8 @@ type mutatorFS struct {
 	*writerFS
 }
 
-func NewTraverseFS(at At) TraverseFS {
-	ents := compose(sanitise(at.Root)).mutator(at.Overwrite)
+func newMutatorFS(at *At) *mutatorFS {
+	ents := compose(sanitise(at.Root)).mutate(at.Overwrite)
 
 	return &mutatorFS{
 		readerFS: &ents.reader,
@@ -457,13 +466,12 @@ func NewTraverseFS(at At) TraverseFS {
 	}
 }
 
-func NewUniversalFS(at At) UniversalFS {
-	ents := compose(sanitise(at.Root)).mutator(at.Overwrite)
+func NewTraverseFS(at At) TraverseFS {
+	return newMutatorFS(&at)
+}
 
-	return &mutatorFS{
-		readerFS: &ents.reader,
-		writerFS: &ents.writer,
-	}
+func NewUniversalFS(at At) UniversalFS {
+	return newMutatorFS(&at)
 }
 
 // 🧩 ---> construction
@@ -483,7 +491,7 @@ type (
 	}
 )
 
-func (e *entities) mutator(overwrite bool) *entities {
+func (e *entities) mutate(overwrite bool) *entities {
 	writer := &baseWriterFS{
 		existsInFS: &e.exists,
 		openFS:     &e.open,
@@ -496,7 +504,7 @@ func (e *entities) mutator(overwrite bool) *entities {
 		makeDirAllFS: &makeDirAllFS{
 			existsInFS: &e.exists,
 		},
-		moverFS: &moverFS{
+		aggregatorFS: &aggregatorFS{
 			baseWriterFS: writer,
 		},
 		removeFS: &removeFS{
@@ -554,5 +562,9 @@ func compose(root string) *entities {
 }
 
 func join(segments ...string) string {
+	// required so we can avoid the use of the file utilities defined
+	// in filepath, which are not appropriate for a relative file systems
+	// because they are based upon translating delimiters into platform
+	// specific separators.
 	return strings.Join(segments, "/")
 }

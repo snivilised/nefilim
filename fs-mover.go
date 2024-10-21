@@ -13,6 +13,13 @@ const (
 )
 
 type (
+	bitmask struct {
+		fromExists bool
+		toExists   bool
+		fromIsDir  bool
+		toIsDir    bool
+	}
+
 	mover interface {
 		create() mover
 		move(from, to string) error
@@ -20,14 +27,7 @@ type (
 
 	moveFunc func(from, to string) error
 
-	moverBitmask struct {
-		fromExists bool
-		toExists   bool
-		fromIsDir  bool
-		toIsDir    bool
-	}
-
-	movers map[moverBitmask]moveFunc
+	movers map[bitmask]moveFunc
 
 	baseMover struct {
 		root    string
@@ -35,6 +35,10 @@ type (
 		actions movers
 	}
 )
+
+func noOp(_, _ string) error {
+	return nil
+}
 
 func (m *baseMover) move(from, to string) error {
 	mask := m.query(from, to)
@@ -49,11 +53,11 @@ func (m *baseMover) move(from, to string) error {
 	return NewInvalidBinaryFsOpError(moveOpName, from, to)
 }
 
-func (m *baseMover) query(from, to string) moverBitmask {
+func (m *baseMover) query(from, to string) bitmask {
 	fromExists, fromIsDir := m.peek(from)
 	toExists, toIsDir := m.peek(to)
 
-	return moverBitmask{
+	return bitmask{
 		fromExists: fromExists,
 		toExists:   toExists,
 		fromIsDir:  fromIsDir,
@@ -109,10 +113,6 @@ func (m *baseMover) moveItemWithoutNameClash(from, to string) error {
 	}
 
 	return m.moveItemWithoutName(from, to)
-}
-
-func (m *baseMover) noOp(_, _ string) error {
-	return nil
 }
 
 type lazyMover struct {
