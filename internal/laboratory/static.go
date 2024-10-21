@@ -5,6 +5,12 @@ import (
 )
 
 type (
+	Change struct {
+		From        Pair
+		Destination string
+		To          Pair
+	}
+
 	Copy struct {
 		Destination string
 	}
@@ -49,6 +55,7 @@ type (
 	}
 
 	StaticFs struct {
+		Change   Change
 		Copy     Copy
 		Create   Create
 		Ensure   Ensure
@@ -79,6 +86,17 @@ var (
 	}{
 		Foo: "foo",
 		FS: StaticFs{
+			Change: Change{
+				From: Pair{
+					File:      "scratch/mad-as-hell.CHANGE-FROM.txt",
+					Directory: "scratch/no-geography-CHANGE-FROM",
+				},
+				Destination: "scratch/no-geography-CHANGE-TO",
+				To: Pair{
+					File:      "mad-as-hell.CHANGE-TO.txt",
+					Directory: "scratch/no-geography-CHANGE-TO",
+				},
+			},
 			Copy: Copy{
 				Destination: "scratch/paradise-lost.txt",
 			},

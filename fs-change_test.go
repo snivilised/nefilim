@@ -19,7 +19,7 @@ import (
 // operation depends on wether the overwrite flag has been specified in the
 // filesystem.
 
-var _ = Describe("op: move", Ordered, func() {
+var _ = Describe("op: change", Ordered, func() {
 	var (
 		root string
 		fS   nef.UniversalFS
@@ -52,12 +52,125 @@ var _ = Describe("op: move", Ordered, func() {
 			)
 		},
 
-		// 🔆
+		// + SUCCESS CASES
+
+		// FROM IS DIRECTORY, TO DOES NOT EXIST (same for both tentative & overwrite)
 		Entry(nil, fsTE[nef.UniversalFS]{
-			given:   "[from] file exists, [to] directory exists, [no-clash]",
+			given:   "[from] directory exists, [to] directory missing, [no-clash]",
 			should:  "succeed",
-			note:    "filename not included in the destination path (from/file.txt => to)",
-			op:      "Move",
+			op:      "Change",
+			require: lab.Static.FS.Scratch,
+			from:    lab.Static.FS.Change.From.Directory,
+			to:      lab.Static.FS.Change.To.Directory,
+			arrange: func(entry fsTE[nef.UniversalFS], _ nef.UniversalFS) {
+				Expect(require(root, entry.require)).To(Succeed())
+				Expect(require(root, entry.from)).To(Succeed())
+			},
+			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
+				_, destination := nef.SplitParent(entry.to)
+				Expect(fS.Change(entry.from, destination)).To(Succeed(),
+					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
+				)
+				Expect(AsDirectory(lab.Static.FS.Change.Destination)).To(ExistInFS(fS))
+			},
+		}),
+
+		// FROM IS FILE, TO DOES NOT EXIST (same for both tentative & overwrite)
+		// FROM IS DIRECTORY, TO DOES NOT EXIST (same for both tentative & overwrite)
+		Entry(nil, fsTE[nef.UniversalFS]{
+			given:   "[from] file exists, [to] file missing, [no-clash]",
+			should:  "succeed",
+			op:      "Change",
+			require: lab.Static.FS.Scratch,
+			from:    lab.Static.FS.Change.From.File,
+			to:      lab.Static.FS.Change.To.File,
+			arrange: func(entry fsTE[nef.UniversalFS], _ nef.UniversalFS) {
+				Expect(require(root, entry.require, entry.from)).To(Succeed())
+			},
+			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
+				Expect(fS.Change(entry.from, entry.to)).To(Succeed(),
+					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
+				)
+				Expect(AsFile(Join(lab.Static.FS.Scratch, entry.to))).To(ExistInFS(fS))
+			},
+		}),
+
+		// FROM IS FILE, TO EXISTS: (overwrite only)
+		Entry(nil, fsTE[nef.UniversalFS]{
+			given:   "[from] file exists, [to] file missing, [no-clash]",
+			should:  "succeed",
+			op:      "Change",
+			require: lab.Static.FS.Scratch,
+			from:    lab.Static.FS.Change.From.File,
+			to:      lab.Static.FS.Change.To.File,
+			arrange: func(entry fsTE[nef.UniversalFS], _ nef.UniversalFS) {
+				Expect(require(root, entry.require, entry.from)).To(Succeed())
+			},
+			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
+				Expect(fS.Change(entry.from, entry.to)).To(Succeed(),
+					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
+				)
+				file := Join(lab.Static.FS.Scratch, entry.to)
+				Expect(AsFile(file)).To(ExistInFS(fS))
+			},
+		}),
+
+		// + FAILURE CASES (other than not in same dir as they have already been covered)
+
+		// FROM IS DIRECTORY, TO EXISTS: (overwrite) -> [MERGE] os.rename, (tentative) -> PROHIBITED
+
+		Entry(nil, fsTE[nef.UniversalFS]{
+			given:   "[from] directory exists, [to] directory exists, [clash]",
+			should:  "succeed, same file ignored",
+			op:      "Change",
+			require: lab.Static.FS.Scratch,
+			from:    lab.Static.FS.Change.From.Directory,
+			to:      lab.Static.FS.Change.To.Directory,
+			arrange: func(entry fsTE[nef.UniversalFS], _ nef.UniversalFS) {
+				Expect(require(root, entry.from)).To(Succeed())
+				Expect(require(root, entry.to)).To(Succeed())
+			},
+			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
+				_, destination := nef.SplitParent(entry.to)
+				Expect(fS.Change(entry.from, destination)).NotTo(Succeed(),
+					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
+				)
+			},
+		}),
+
+		// FROM IS FILE, TO EXISTS: (tentative) -> PROHIBITED
+
+		Entry(nil, fsTE[nef.UniversalFS]{
+			given:   "[from] file exists, [to] directory exists, [clash]",
+			should:  "succeed, same file ignored",
+			op:      "Change",
+			require: lab.Static.FS.Scratch,
+			from:    lab.Static.FS.Change.From.File,
+			to:      lab.Static.FS.Change.To.File,
+			arrange: func(entry fsTE[nef.UniversalFS], _ nef.UniversalFS) {
+				Expect(require(root,
+					entry.require,
+					entry.from,
+				)).To(Succeed())
+				Expect(require(root,
+					entry.require,
+					Join(lab.Static.FS.Scratch, entry.to),
+				)).To(Succeed())
+			},
+			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
+				Expect(fS.Change(entry.from, entry.to)).To(Succeed(),
+					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
+				)
+				Expect(AsFile(entry.from)).NotTo(ExistInFS(fS))
+			},
+		}),
+
+		// 🔆
+		XEntry(nil, Label("INVALID:DIFF DIR"), fsTE[nef.UniversalFS]{
+			given:   "[from] file exists, [to] file missing, [no-clash]",
+			should:  "succeed",
+			note:    "filename not included in the destination path (from/file.txt => to)", // !!! WRONG
+			op:      "Change",
 			require: lab.Static.FS.Scratch,
 			from:    lab.Static.FS.Move.From.File,
 			to:      lab.Static.FS.Scratch,
@@ -66,18 +179,18 @@ var _ = Describe("op: move", Ordered, func() {
 				Expect(require(root, lab.Static.FS.Move.Destination)).To(Succeed())
 			},
 			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
-				Expect(fS.Move(entry.from, lab.Static.FS.Move.Destination)).To(Succeed(),
+				Expect(fS.Change(entry.from, lab.Static.FS.Move.Destination)).To(Succeed(),
 					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 				)
 				Expect(AsFile(lab.Static.FS.Move.To.File)).To(ExistInFS(fS))
 			},
 		}),
 
-		Entry(nil, fsTE[nef.UniversalFS]{
+		XEntry(nil, Label("INVALID:DIFF DIR"), fsTE[nef.UniversalFS]{
 			given:   "[from] file exists, [to] directory exists, [clash]",
 			should:  "succeed, only if override",
 			note:    "filename not included in the destination path (from/file.txt => to)",
-			op:      "Move",
+			op:      "Change",
 			require: lab.Static.FS.Scratch,
 			from:    lab.Static.FS.Move.From.File,
 			to:      lab.Static.FS.Scratch,
@@ -93,21 +206,21 @@ var _ = Describe("op: move", Ordered, func() {
 			},
 			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
 				if entry.overwrite {
-					Expect(fS.Move(entry.from, lab.Static.FS.Move.Destination)).To(Succeed(),
+					Expect(fS.Change(entry.from, lab.Static.FS.Move.Destination)).To(Succeed(),
 						fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 					)
 					Expect(AsFile(lab.Static.FS.Move.To.File)).To(ExistInFS(fS))
 					return
 				}
-				Expect(fS.Move(entry.from, lab.Static.FS.Move.Destination)).NotTo(Succeed())
+				Expect(fS.Change(entry.from, lab.Static.FS.Move.Destination)).NotTo(Succeed())
 			},
 		}),
 
-		Entry(nil, fsTE[nef.UniversalFS]{
+		XEntry(nil, Label("INVALID:DIFF DIR"), fsTE[nef.UniversalFS]{
 			given:   "[from] file exists, [to] directory exists, [no-clash]",
 			should:  "succeed",
 			note:    "filename IS included in the destination path (from/file.txt => to/file.txt)",
-			op:      "Move",
+			op:      "Change",
 			require: lab.Static.FS.Scratch,
 			from:    lab.Static.FS.Move.From.File,
 			to:      lab.Static.FS.Scratch,
@@ -117,18 +230,18 @@ var _ = Describe("op: move", Ordered, func() {
 			},
 			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
 				destination := lab.Static.FS.Move.To.File
-				Expect(fS.Move(entry.from, destination)).To(Succeed(),
+				Expect(fS.Change(entry.from, destination)).To(Succeed(),
 					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 				)
 				Expect(AsFile(destination)).To(ExistInFS(fS))
 			},
 		}),
 
-		Entry(nil, fsTE[nef.UniversalFS]{
+		XEntry(nil, Label("INVALID:DIFF DIR"), fsTE[nef.UniversalFS]{
 			given:   "[from] file exists, [to] directory exists, [clash]",
 			should:  "succeed, only if override",
 			note:    "filename IS included in the destination path (from/file.txt => to/file.txt)",
-			op:      "Move",
+			op:      "Change",
 			require: lab.Static.FS.Scratch,
 			from:    lab.Static.FS.Move.From.File,
 			to:      lab.Static.FS.Scratch,
@@ -148,23 +261,23 @@ var _ = Describe("op: move", Ordered, func() {
 				destination := lab.Static.FS.Move.To.File
 
 				if entry.overwrite {
-					Expect(fS.Move(entry.from, destination)).To(Succeed(),
+					Expect(fS.Change(entry.from, destination)).To(Succeed(),
 						fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 					)
 					Expect(AsFile(destination)).To(ExistInFS(fS))
 					return
 				}
-				Expect(fS.Move(entry.from, destination)).NotTo(Succeed(),
+				Expect(fS.Change(entry.from, destination)).NotTo(Succeed(),
 					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 				)
 			},
 		}),
 
-		Entry(nil, fsTE[nef.UniversalFS]{
+		XEntry(nil, Label("INVALID:DIFF DIR"), fsTE[nef.UniversalFS]{
 			given:   "[from] directory exists, [to] directory exists, [no clash]",
 			should:  "succeed",
 			note:    "directory not included in the destination path (from/dir => to)",
-			op:      "Move",
+			op:      "Change",
 			require: lab.Static.FS.Move.From.Directory,
 			from:    lab.Static.FS.Move.From.Directory,
 			to:      lab.Static.FS.Scratch,
@@ -173,18 +286,18 @@ var _ = Describe("op: move", Ordered, func() {
 				Expect(require(root, lab.Static.FS.Move.Destination)).To(Succeed())
 			},
 			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
-				Expect(fS.Move(entry.from, lab.Static.FS.Move.Destination)).To(Succeed(),
+				Expect(fS.Change(entry.from, lab.Static.FS.Move.Destination)).To(Succeed(),
 					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 				)
 				Expect(AsDirectory(lab.Static.FS.Move.To.Directory)).To(ExistInFS(fS))
 			},
 		}),
 
-		Entry(nil, fsTE[nef.UniversalFS]{
+		XEntry(nil, Label("INVALID:DIFF DIR"), fsTE[nef.UniversalFS]{
 			given:   "[from] directory exists, [to] directory exists, [clash]",
 			should:  "fail",
 			note:    "directory not included in the destination path (from/dir => to)",
-			op:      "Move",
+			op:      "Change",
 			require: lab.Static.FS.Move.From.Directory,
 			from:    lab.Static.FS.Move.From.Directory,
 			to:      lab.Static.FS.Scratch,
@@ -195,23 +308,23 @@ var _ = Describe("op: move", Ordered, func() {
 			},
 			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
 				if entry.overwrite {
-					Expect(fS.Move(entry.from, lab.Static.FS.Move.Destination)).NotTo(Succeed(),
+					Expect(fS.Change(entry.from, lab.Static.FS.Move.Destination)).NotTo(Succeed(),
 						fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 					)
 					return
 				}
 
-				Expect(fS.Move(entry.from, lab.Static.FS.Move.Destination)).NotTo(Succeed(),
+				Expect(fS.Change(entry.from, lab.Static.FS.Move.Destination)).NotTo(Succeed(),
 					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 				)
 			},
 		}),
 
-		Entry(nil, fsTE[nef.UniversalFS]{
+		XEntry(nil, Label("INVALID:DIFF DIR"), fsTE[nef.UniversalFS]{
 			given:   "[from] directory exists, [to] directory exists, [no clash]",
 			should:  "succeed",
 			note:    "directory IS included in the destination path (from/dir => to/dir)",
-			op:      "Move",
+			op:      "Change",
 			require: lab.Static.FS.Move.From.Directory,
 			from:    lab.Static.FS.Move.From.Directory,
 			to:      lab.Static.FS.Scratch,
@@ -221,18 +334,18 @@ var _ = Describe("op: move", Ordered, func() {
 			},
 			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
 				destination := lab.Static.FS.Move.To.Directory
-				Expect(fS.Move(entry.from, destination)).To(Succeed(),
+				Expect(fS.Change(entry.from, destination)).To(Succeed(),
 					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 				)
 				Expect(AsDirectory(destination)).To(ExistInFS(fS))
 			},
 		}),
 
-		Entry(nil, fsTE[nef.UniversalFS]{
+		XEntry(nil, Label("INVALID:DIFF DIR"), fsTE[nef.UniversalFS]{
 			given:   "[from] directory exists, [to] directory exists, [clash]",
 			should:  "fail",
 			note:    "directory IS included in the destination path (from/dir => to/dir)",
-			op:      "Move",
+			op:      "Change",
 			require: lab.Static.FS.Move.From.Directory,
 			from:    lab.Static.FS.Move.From.Directory,
 			to:      lab.Static.FS.Scratch,
@@ -243,16 +356,16 @@ var _ = Describe("op: move", Ordered, func() {
 			},
 			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
 				destination := lab.Static.FS.Move.To.Directory
-				Expect(fS.Move(entry.from, destination)).NotTo(Succeed(),
+				Expect(fS.Change(entry.from, destination)).NotTo(Succeed(),
 					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 				)
 			},
 		}),
 
 		Entry(nil, fsTE[nef.UniversalFS]{
-			given:   "[from] file missing",
+			given:   "[from] path missing",
 			should:  "fail",
-			op:      "Move",
+			op:      "Change",
 			require: lab.Static.FS.Scratch,
 			from:    lab.Static.Foo,
 			to:      lab.Static.FS.Scratch,
@@ -260,16 +373,16 @@ var _ = Describe("op: move", Ordered, func() {
 				Expect(require(root, entry.require)).To(Succeed())
 			},
 			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
-				err := fS.Move(entry.from, entry.to)
+				err := fS.Change(entry.from, entry.to)
 				Expect(err).NotTo(Succeed(), fmt.Sprintf("OVERWRITE: %v", entry.overwrite))
 				Expect(nef.IsBinaryFsOpError(err)).To(BeTrue())
 			},
 		}),
 
-		Entry(nil, fsTE[nef.UniversalFS]{
+		XEntry(nil, Label("INVALID:DIFF DIR"), fsTE[nef.UniversalFS]{
 			given:   "[from] file exists, [to] directory missing",
 			should:  "fail",
-			op:      "Move",
+			op:      "Change",
 			require: lab.Static.FS.Scratch,
 			from:    lab.Static.FS.Move.From.File,
 			to:      lab.Static.FS.Move.Destination,
@@ -278,7 +391,7 @@ var _ = Describe("op: move", Ordered, func() {
 			},
 			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
 				destination := filepath.Join(entry.to, lab.Static.Foo)
-				Expect(fS.Move(entry.from, destination)).NotTo(Succeed(),
+				Expect(fS.Change(entry.from, destination)).NotTo(Succeed(),
 					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 				)
 			},
@@ -287,16 +400,11 @@ var _ = Describe("op: move", Ordered, func() {
 		// The following tests are a duplicate of those defined for the rename
 		// operation 💠, where the target item is being renamed into the same directory,
 		// but these should be rejected with an error, because this amounts to a
-		// rename which is not the intended use of Move. Instead a custom error
-		// is returned that denotes same directory so that the client can detect this
-		// and invoke rename, with the same parameters. The exception to this is
-		// if the from/to names refer to the same file, in which case the Move
-		// is ignored as a no op.
-		//
+		// Move which is not the intended use of Change.
 		Entry(nil, fsTE[nef.UniversalFS]{
 			given:   "[from] file exists, [to] name does not exist, [no-clash]",
-			should:  "fail, same directory move, use rename instead",
-			op:      "Move",
+			should:  "fail, [to] path should not include directory path",
+			op:      "Change",
 			require: lab.Static.FS.Scratch,
 			from:    lab.Static.FS.Rename.From.File,
 			to:      lab.Static.FS.Rename.To.File,
@@ -304,14 +412,16 @@ var _ = Describe("op: move", Ordered, func() {
 				Expect(require(root, entry.require, entry.from)).To(Succeed())
 			},
 			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
-				IsSameDirectoryMoveRejectionError(fS.Move(entry.from, entry.to), entry.should)
+				IsInvalidPathError(
+					fS.Change(entry.from, entry.to), entry.should,
+				)
 			},
 		}),
 
 		Entry(nil, fsTE[nef.UniversalFS]{
 			given:   "[from] file exists, [to] equal to [from], [clash]",
-			should:  "succeed, ignored",
-			op:      "Move",
+			should:  "fail, [to] path should not include directory path",
+			op:      "Change",
 			require: lab.Static.FS.Scratch,
 			from:    lab.Static.FS.Rename.From.File,
 			to:      lab.Static.FS.Rename.From.File,
@@ -319,14 +429,16 @@ var _ = Describe("op: move", Ordered, func() {
 				Expect(require(root, entry.require, entry.from)).To(Succeed())
 			},
 			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
-				Expect(fS.Move(entry.from, entry.to)).To(Succeed())
+				IsInvalidPathError(
+					fS.Change(entry.from, entry.to), entry.should,
+				)
 			},
 		}),
 
 		Entry(nil, fsTE[nef.UniversalFS]{
 			given:   "[from] directory exists, [to] name does not exist, [no-clash]",
-			should:  "fail, same directory move, use rename instead",
-			op:      "Move",
+			should:  "fail, [to] path should not include directory path",
+			op:      "Change",
 			require: lab.Static.FS.Rename.From.Directory,
 			from:    lab.Static.FS.Rename.From.Directory,
 			to:      lab.Static.FS.Rename.To.Directory,
@@ -334,14 +446,16 @@ var _ = Describe("op: move", Ordered, func() {
 				Expect(require(root, entry.require)).To(Succeed())
 			},
 			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
-				IsSameDirectoryMoveRejectionError(fS.Move(entry.from, entry.to), entry.should)
+				IsInvalidPathError(
+					fS.Change(entry.from, entry.to), entry.should,
+				)
 			},
 		}),
 
 		Entry(nil, fsTE[nef.UniversalFS]{
 			given:   "[from] directory exists, [to] equal to [from], [clash]",
-			should:  "fail, directory names can't be same",
-			op:      "Move",
+			should:  "fail, [to] path should not include directory path",
+			op:      "Change",
 			require: lab.Static.FS.Rename.From.Directory,
 			from:    lab.Static.FS.Rename.From.Directory,
 			to:      lab.Static.FS.Rename.From.Directory,
@@ -349,8 +463,13 @@ var _ = Describe("op: move", Ordered, func() {
 				Expect(require(root, entry.require)).To(Succeed())
 			},
 			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
-				IsSameDirectoryMoveRejectionError(fS.Move(entry.from, entry.to), entry.should)
+				IsInvalidPathError(
+					fS.Change(entry.from, entry.to), entry.should,
+				)
 			},
 		}),
+
+		// ===> may have to repeat the above to cover successful cases where to
+		// does not contains a different directory, but these may already be covered.
 	)
 })
