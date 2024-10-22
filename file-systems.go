@@ -5,7 +5,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 // 🔥 An important note about using standard golang file systems (io.fs/fs.FS)
@@ -559,12 +558,4 @@ func compose(root string) *entities {
 		exists: exists,
 		reader: reader,
 	}
-}
-
-func join(segments ...string) string {
-	// required so we can avoid the use of the file utilities defined
-	// in filepath, which are not appropriate for a relative file systems
-	// because they are based upon translating delimiters into platform
-	// specific separators.
-	return strings.Join(segments, "/")
 }
