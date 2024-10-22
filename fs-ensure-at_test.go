@@ -1,11 +1,8 @@
 package nef_test
 
 import (
-	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
-	"testing/fstest"
 
 	. "github.com/onsi/ginkgo/v2" //nolint:revive // ok
 	. "github.com/onsi/gomega"    //nolint:revive // ok
@@ -16,10 +13,8 @@ import (
 
 var _ = Describe("Ensure", Ordered, func() {
 	var (
-		mocks *nef.ResolveMocks
-		mapFS *makeDirMapFS
-		root  string
-		fS    nef.MakeDirFS
+		root string
+		fS   nef.MakeDirFS
 	)
 
 	BeforeAll(func() {
@@ -27,22 +22,6 @@ var _ = Describe("Ensure", Ordered, func() {
 	})
 
 	BeforeEach(func() {
-		mocks = &nef.ResolveMocks{
-			HomeFunc: func() (string, error) {
-				return filepath.Join(string(filepath.Separator), "home", "prodigy"), nil
-			},
-			AbsFunc: func(_ string) (string, error) { // no-op
-				return "", errors.New("not required for these tests")
-			},
-		}
-
-		mapFS = &makeDirMapFS{
-			mapFS: fstest.MapFS{
-				filepath.Join("home", "prodigy"): &fstest.MapFile{
-					Mode: os.ModeDir,
-				},
-			},
-		}
 		scratch(root)
 
 		fS = nef.NewMakeDirFS(nef.At{
@@ -164,44 +143,6 @@ var _ = Describe("Ensure", Ordered, func() {
 				Expect(AsDirectory(ensureAt)).To(ExistInFS(fS))
 				Expect(result).To(Equal(file))
 			},
-		}),
-	)
-
-	DescribeTable("with mapFS",
-		func(entry *ensureTE) {
-			home, _ := mocks.HomeFunc()
-			location := TrimRoot(filepath.Join(home, entry.relative))
-
-			if entry.directory {
-				location += string(filepath.Separator)
-			}
-
-			actual, err := nef.EnsurePathAt(location, lab.Static.FS.Ensure.Default.File, lab.Perms.File, mapFS)
-			directory, _ := filepath.Split(actual)
-			directory = filepath.Clean(directory)
-			expected := TrimRoot(Path(home, entry.expected))
-
-			Expect(err).Error().To(BeNil())
-			Expect(actual).To(Equal(expected))
-			Expect(AsDirectory(TrimRoot(directory))).To(ExistInFS(mapFS))
-		},
-		func(entry *ensureTE) string {
-			return fmt.Sprintf("🧪 ===> given: '%v', should: '%v'", entry.given, entry.should)
-		},
-
-		XEntry(nil, &ensureTE{
-			given:    "path is file",
-			should:   "create parent directory and return specified file path",
-			relative: filepath.Join("logs", "test.log"), // home/logs/test.log
-			expected: "logs/test.log",
-		}),
-
-		XEntry(nil, &ensureTE{
-			given:     "path is directory",
-			should:    "create parent directory and return default file path",
-			relative:  "logs/",
-			directory: true,
-			expected:  "logs/default-test.log",
 		}),
 	)
 })
