@@ -31,7 +31,9 @@ type (
 
 func (m *baseChanger) guard(_, to string) error {
 	if strings.Contains(to, "/") {
-		return NewInvalidPathError(to)
+		return NewInvalidPathError(
+			"move rejected, change 'to' path can't contain separator", to,
+		)
 	}
 
 	return nil

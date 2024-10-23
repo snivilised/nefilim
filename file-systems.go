@@ -224,7 +224,7 @@ func NewMakeDirFS(at At) MakeDirFS {
 // If there is an error, it will be of type *PathError.
 func (f *makeDirAllFS) MakeDir(name string, perm os.FileMode) error {
 	if !fs.ValidPath(name) {
-		return NewInvalidPathError(name)
+		return NewInvalidPathError("MakeDir", name)
 	}
 
 	if f.DirectoryExists(name) {
@@ -244,7 +244,7 @@ func (f *makeDirAllFS) MakeDir(name string, perm os.FileMode) error {
 // and returns nil.
 func (f *makeDirAllFS) MakeDirAll(name string, perm os.FileMode) error {
 	if !fs.ValidPath(name) {
-		return NewInvalidPathError(name)
+		return NewInvalidPathError("MakeDirAll", name)
 	}
 
 	if f.DirectoryExists(name) {
@@ -270,7 +270,7 @@ func (f *makeDirAllFS) MakeDirAll(name string, perm os.FileMode) error {
 func (f *makeDirAllFS) Ensure(as PathAs,
 ) (at string, err error) {
 	if !fs.ValidPath(as.Name) {
-		return "", NewInvalidPathError(as.Name)
+		return "", NewInvalidPathError("Ensure", as.Name)
 	}
 
 	var (
@@ -304,7 +304,7 @@ type removeFS struct {
 
 func (f *removeFS) Remove(name string) error {
 	if !fs.ValidPath(name) {
-		return NewInvalidPathError(name)
+		return NewInvalidPathError("Remove", name)
 	}
 
 	path := filepath.Join(f.root, filepath.Clean(name))
@@ -313,7 +313,7 @@ func (f *removeFS) Remove(name string) error {
 
 func (f *removeFS) RemoveAll(path string) error {
 	if !fs.ValidPath(path) {
-		return NewInvalidPathError(path)
+		return NewInvalidPathError("RemoveAll", path)
 	}
 
 	return os.RemoveAll(filepath.Join(f.root, filepath.Clean(path)))
@@ -361,7 +361,7 @@ func NewWriteFileFS(at At) WriteFileFS {
 // flexible and just results in friction, but this is out of our power.
 func (f *writeFileFS) Create(name string) (*os.File, error) {
 	if !fs.ValidPath(name) {
-		return nil, NewInvalidPathError(name)
+		return nil, NewInvalidPathError("Create", name)
 	}
 
 	if !f.overwrite && f.FileExists(name) {
@@ -379,7 +379,7 @@ func (f *writeFileFS) Create(name string) (*os.File, error) {
 // can leave the file in a partially written state.
 func (f *writeFileFS) WriteFile(name string, data []byte, perm os.FileMode) error {
 	if !fs.ValidPath(name) {
-		return NewInvalidPathError(name)
+		return NewInvalidPathError("WriteFile", name)
 	}
 
 	path := filepath.Join(f.root, name)

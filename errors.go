@@ -11,11 +11,13 @@ func IsInvalidPathError(err error) bool {
 }
 
 // NewInvalidPathError
-func NewInvalidPathError(path string) error {
+func NewInvalidPathError(description, path string) error {
 	// should this have a description too to describe the path?
 	// we probably need a CoreInvalidPathError which InvalidPathError
 	// wraps.
-	return fmt.Errorf("path: %q, %w", path, ErrCoreInvalidPath)
+	return fmt.Errorf("description: %q, path: %q, %w",
+		description, path, ErrCoreInvalidPath,
+	)
 }
 
 // IsBinaryFsOpError
