@@ -25,7 +25,7 @@ var _ = Describe("op: create", Ordered, func() {
 			var fS nef.WriteFileFS
 
 			BeforeEach(func() {
-				fS = nef.NewWriteFileFS(nef.At{
+				fS = nef.NewWriteFileFS(nef.Rel{
 					Root:      root,
 					Overwrite: true,
 				})
@@ -64,7 +64,7 @@ var _ = Describe("op: create", Ordered, func() {
 			var fS nef.WriteFileFS
 
 			BeforeEach(func() {
-				fS = nef.NewWriteFileFS(nef.At{
+				fS = nef.NewWriteFileFS(nef.Rel{
 					Root:      root,
 					Overwrite: false,
 				})

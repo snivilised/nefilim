@@ -20,7 +20,7 @@ var _ = Describe("op: rename", Ordered, func() {
 	})
 
 	BeforeEach(func() {
-		fS = nef.NewUniversalFS(nef.At{
+		fS = nef.NewUniversalFS(nef.Rel{
 			Root:      root,
 			Overwrite: false,
 		})
