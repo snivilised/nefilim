@@ -23,7 +23,7 @@ var _ = Describe("op: make-dir/all", Ordered, func() {
 			)
 
 			BeforeEach(func() {
-				fS = nef.NewMakeDirFS(nef.At{
+				fS = nef.NewMakeDirFS(nef.Rel{
 					Root:      root,
 					Overwrite: false,
 				})

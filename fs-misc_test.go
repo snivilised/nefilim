@@ -23,7 +23,7 @@ var _ = Describe("file systems", Ordered, func() {
 		var fS fs.StatFS
 
 		BeforeEach(func() {
-			fS = nef.NewStatFS(nef.At{
+			fS = nef.NewStatFS(nef.Rel{
 				Root: root,
 			})
 		})
@@ -49,7 +49,7 @@ var _ = Describe("file systems", Ordered, func() {
 		var fS nef.ExistsInFS
 
 		BeforeEach(func() {
-			fS = nef.NewExistsInFS(nef.At{
+			fS = nef.NewExistsInFS(nef.Rel{
 				Root: root,
 			})
 		})
@@ -87,7 +87,7 @@ var _ = Describe("file systems", Ordered, func() {
 		var fS nef.ReadFileFS
 
 		BeforeEach(func() {
-			fS = nef.NewReadFileFS(nef.At{
+			fS = nef.NewReadFileFS(nef.Rel{
 				Root: root,
 			})
 		})

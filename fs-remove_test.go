@@ -35,7 +35,7 @@ var _ = Describe("op: remove", Ordered, func() {
 	DescribeTable("removal",
 		func(entry fsTE[nef.UniversalFS]) {
 			for _, overwrite := range []bool{false, true} {
-				fS = nef.NewUniversalFS(nef.At{
+				fS = nef.NewUniversalFS(nef.Rel{
 					Root:      root,
 					Overwrite: entry.overwrite,
 				})

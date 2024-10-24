@@ -10,8 +10,11 @@ import (
 // we need to define proprietary ones here in this package.
 
 type (
-	// At represents generic info required to create a file system
-	At struct {
+	// Rel represents generic info required to create a relative file system.
+	// Relative just means that a file system is created with a root path and
+	// the operations on the file system are invoked with paths that must be
+	// relative to the root.
+	Rel struct {
 		Root      string
 		Overwrite bool
 	}

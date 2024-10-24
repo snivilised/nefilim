@@ -56,8 +56,8 @@ type statFS struct {
 	*openFS
 }
 
-func NewStatFS(at At) fs.StatFS {
-	ents := compose(sanitise(at.Root))
+func NewStatFS(rel Rel) fs.StatFS {
+	ents := compose(sanitise(rel.Root))
 	return &ents.stat
 }
 
@@ -73,8 +73,8 @@ type readDirFS struct {
 }
 
 // NewReadDirFS creates a file system with read directory capability
-func NewReadDirFS(at At) fs.ReadDirFS {
-	ents := compose(sanitise(at.Root))
+func NewReadDirFS(rel Rel) fs.ReadDirFS {
+	ents := compose(sanitise(rel.Root))
 
 	return &ents.exists
 }
@@ -124,8 +124,8 @@ type existsInFS struct {
 }
 
 // ExistsInFS
-func NewExistsInFS(at At) ExistsInFS {
-	ents := compose(sanitise(at.Root))
+func NewExistsInFS(rel Rel) ExistsInFS {
+	ents := compose(sanitise(rel.Root))
 
 	return &ents.exists
 }
@@ -163,8 +163,8 @@ type readFileFS struct {
 	*queryStatusFS
 }
 
-func NewReadFileFS(at At) ReadFileFS {
-	ents := compose(sanitise(at.Root))
+func NewReadFileFS(rel Rel) ReadFileFS {
+	ents := compose(sanitise(rel.Root))
 
 	return &ents.reader
 }
@@ -213,8 +213,8 @@ type makeDirAllFS struct {
 }
 
 // NewMakeDirFS
-func NewMakeDirFS(at At) MakeDirFS {
-	ents := compose(sanitise(at.Root)).mutate(at.Overwrite)
+func NewMakeDirFS(rel Rel) MakeDirFS {
+	ents := compose(sanitise(rel.Root)).mutate(rel.Overwrite)
 
 	return &ents.writer
 }
@@ -339,8 +339,8 @@ type writeFileFS struct {
 	*baseWriterFS
 }
 
-func NewWriteFileFS(at At) WriteFileFS {
-	ents := compose(sanitise(at.Root)).mutate(at.Overwrite)
+func NewWriteFileFS(rel Rel) WriteFileFS {
+	ents := compose(sanitise(rel.Root)).mutate(rel.Overwrite)
 
 	return &ents.writer
 }
@@ -397,8 +397,8 @@ type readerFS struct {
 }
 
 // NewReaderFS
-func NewReaderFS(at At) ReaderFS {
-	ents := compose(sanitise(at.Root))
+func NewReaderFS(rel Rel) ReaderFS {
+	ents := compose(sanitise(rel.Root))
 
 	return &ents.reader
 }
@@ -444,8 +444,8 @@ type writerFS struct {
 	*writeFileFS
 }
 
-func NewWriterFS(at At) WriterFS {
-	ents := compose(sanitise(at.Root)).mutate(at.Overwrite)
+func NewWriterFS(rel Rel) WriterFS {
+	ents := compose(sanitise(rel.Root)).mutate(rel.Overwrite)
 
 	return &ents.writer
 }
@@ -456,8 +456,8 @@ type mutatorFS struct {
 	*writerFS
 }
 
-func newMutatorFS(at *At) *mutatorFS {
-	ents := compose(sanitise(at.Root)).mutate(at.Overwrite)
+func newMutatorFS(rel *Rel) *mutatorFS {
+	ents := compose(sanitise(rel.Root)).mutate(rel.Overwrite)
 
 	return &mutatorFS{
 		readerFS: &ents.reader,
@@ -465,12 +465,12 @@ func newMutatorFS(at *At) *mutatorFS {
 	}
 }
 
-func NewTraverseFS(at At) TraverseFS {
-	return newMutatorFS(&at)
+func NewTraverseFS(rel Rel) TraverseFS {
+	return newMutatorFS(&rel)
 }
 
-func NewUniversalFS(at At) UniversalFS {
-	return newMutatorFS(&at)
+func NewUniversalFS(rel Rel) UniversalFS {
+	return newMutatorFS(&rel)
 }
 
 // 🧩 ---> construction

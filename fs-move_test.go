@@ -34,7 +34,7 @@ var _ = Describe("op: move", Ordered, func() {
 			for _, overwrite := range []bool{false, true} {
 				scratch(root)
 
-				fS = nef.NewUniversalFS(nef.At{
+				fS = nef.NewUniversalFS(nef.Rel{
 					Root:      root,
 					Overwrite: overwrite,
 				})

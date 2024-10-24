@@ -24,7 +24,7 @@ var _ = Describe("Ensure", Ordered, func() {
 	BeforeEach(func() {
 		scratch(root)
 
-		fS = nef.NewMakeDirFS(nef.At{
+		fS = nef.NewMakeDirFS(nef.Rel{
 			Root: root,
 		})
 	})
