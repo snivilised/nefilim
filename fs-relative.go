@@ -359,7 +359,7 @@ func NewWriteFileFS(rel Rel) WriteFileFS {
 // the fly wether a call to Create is on a override basis or not. This decision
 // has to be made at the point of creating the file system. This is less
 // flexible and just results in friction, but this is out of our power.
-func (f *writeFileFS) Create(name string) (*os.File, error) {
+func (f *writeFileFS) Create(name string) (fs.File, error) {
 	if !fs.ValidPath(name) {
 		return nil, NewInvalidPathError("Create", name)
 	}
