@@ -171,7 +171,7 @@ func (f *absoluteFS) Rename(from, to string) error {
 // (before umask). If successful, methods on the returned File can
 // be used for I/O; the associated file descriptor has mode O_RDWR.
 // If there is an error, it will be of type *PathError.
-func (f *absoluteFS) Create(name string) (*os.File, error) {
+func (f *absoluteFS) Create(name string) (fs.File, error) {
 	return os.Create(name)
 }
 

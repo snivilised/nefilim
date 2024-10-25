@@ -123,7 +123,7 @@ type (
 	// WriteFileFS file system non streaming writer
 	WriteFileFS interface {
 		// Create creates or truncates the named file.
-		Create(name string) (*os.File, error)
+		Create(name string) (fs.File, error)
 		// Write writes file at path, to file system specified
 		WriteFile(name string, data []byte, perm os.FileMode) error
 	}

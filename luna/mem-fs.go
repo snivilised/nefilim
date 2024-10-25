@@ -1,10 +1,12 @@
 package luna
 
 import (
+	"io"
 	"io/fs"
 	"os"
 	"strings"
 	"testing/fstest"
+	"time"
 
 	nef "github.com/snivilised/nefilim"
 	lab "github.com/snivilised/nefilim/internal/laboratory"
@@ -44,22 +46,15 @@ func (f *MemFS) DirectoryExists(name string) bool {
 	return false
 }
 
-func (f *MemFS) Create(name string) (*os.File, error) {
+func (f *MemFS) Create(name string) (fs.File, error) {
 	if _, err := f.Stat(name); err == nil {
 		return nil, fs.ErrExist
 	}
 
-	file := &fstest.MapFile{
-		Mode: lab.Perms.File,
-	}
+	adapter := &FileAdapter{name: name}
+	f.MapFS[name] = &fstest.MapFile{Data: adapter.data}
 
-	f.MapFS[name] = file
-	// TODO: this needs a resolution using a file interface
-	// rather than using os.File which is a struct not an
-	// interface
-	dummy := &os.File{}
-
-	return dummy, nil
+	return adapter, nil
 }
 
 func (f *MemFS) MakeDir(name string, perm os.FileMode) error {
@@ -175,4 +170,73 @@ func (f *MemFS) WriteFile(name string, data []byte, perm os.FileMode) error {
 	}
 
 	return nil
+}
+
+// File
+
+type FileInfoAdapter struct {
+	name string
+	size int64
+	dir  bool
+}
+
+func (fi *FileInfoAdapter) Name() string {
+	return fi.name
+}
+
+func (fi *FileInfoAdapter) Size() int64 {
+	return fi.size
+}
+
+func (fi *FileInfoAdapter) Mode() os.FileMode {
+	return lab.Perms.File
+}
+
+func (fi *FileInfoAdapter) ModTime() time.Time {
+	var t time.Time
+	return t
+}
+
+func (fi *FileInfoAdapter) IsDir() bool {
+	return fi.dir
+}
+
+func (fi *FileInfoAdapter) Sys() interface{} {
+	return nil
+}
+
+type FileAdapter struct {
+	name string
+	data []byte
+	pos  int64
+}
+
+func (f *FileAdapter) Read(p []byte) (n int, err error) {
+	if f.pos >= int64(len(f.data)) {
+		return 0, io.EOF
+	}
+
+	n = copy(p, f.data[f.pos:])
+	f.pos += int64(n)
+
+	return n, nil
+}
+
+func (f *FileAdapter) Write(p []byte) (n int, err error) {
+	f.data = append(f.data[:f.pos], p...)
+	n = len(p)
+	f.pos += int64(n)
+
+	return n, nil
+}
+
+func (f *FileAdapter) Close() error {
+	return nil
+}
+
+func (f *FileAdapter) Stat() (os.FileInfo, error) {
+	return &FileInfoAdapter{
+		name: f.name,
+		size: int64(len(f.data)),
+	}, nil
 }
