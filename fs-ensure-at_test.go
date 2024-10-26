@@ -9,6 +9,7 @@ import (
 
 	nef "github.com/snivilised/nefilim"
 	lab "github.com/snivilised/nefilim/internal/laboratory"
+	"github.com/snivilised/nefilim/test/luna"
 )
 
 var _ = Describe("Ensure", Ordered, func() {
@@ -18,7 +19,7 @@ var _ = Describe("Ensure", Ordered, func() {
 	)
 
 	BeforeAll(func() {
-		root = Repo("test")
+		root = luna.Repo("test")
 	})
 
 	BeforeEach(func() {
@@ -97,7 +98,7 @@ var _ = Describe("Ensure", Ordered, func() {
 			target:  lab.Static.FS.Ensure.Log.File,
 			from:    lab.Static.FS.Ensure.Home,
 			arrange: func(entry fsTE[nef.MakeDirFS], _ nef.MakeDirFS) {
-				parent := Join(entry.require, entry.from)
+				parent := luna.Yoke(entry.require, entry.from)
 				Expect(require(root, parent)).To(Succeed())
 			},
 			action: func(entry fsTE[nef.MakeDirFS], fS nef.MakeDirFS) {
@@ -112,7 +113,7 @@ var _ = Describe("Ensure", Ordered, func() {
 				)
 				Expect(err).To(Succeed())
 				ensureAt := lab.Static.FS.Ensure.Default.Directory
-				Expect(AsDirectory(ensureAt)).To(ExistInFS(fS))
+				Expect(luna.AsDirectory(ensureAt)).To(luna.ExistInFS(fS))
 				_, file = filepath.Split(entry.target)
 				Expect(result).To(Equal(file))
 			},
@@ -126,7 +127,7 @@ var _ = Describe("Ensure", Ordered, func() {
 			target:  lab.Static.FS.Ensure.Log.Directory,
 			from:    lab.Static.FS.Ensure.Home,
 			arrange: func(entry fsTE[nef.MakeDirFS], _ nef.MakeDirFS) {
-				parent := Join(entry.require, entry.from)
+				parent := luna.Yoke(entry.require, entry.from)
 				Expect(require(root, parent)).To(Succeed())
 			},
 			action: func(entry fsTE[nef.MakeDirFS], fS nef.MakeDirFS) {
@@ -140,7 +141,7 @@ var _ = Describe("Ensure", Ordered, func() {
 				)
 				Expect(err).To(Succeed())
 				ensureAt := lab.Static.FS.Ensure.Default.Directory
-				Expect(AsDirectory(ensureAt)).To(ExistInFS(fS))
+				Expect(luna.AsDirectory(ensureAt)).To(luna.ExistInFS(fS))
 				Expect(result).To(Equal(file))
 			},
 		}),

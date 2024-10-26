@@ -8,7 +8,7 @@ import (
 
 	nef "github.com/snivilised/nefilim"
 	lab "github.com/snivilised/nefilim/internal/laboratory"
-	"github.com/snivilised/nefilim/luna"
+	"github.com/snivilised/nefilim/test/luna"
 )
 
 var (

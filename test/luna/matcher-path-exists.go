@@ -1,4 +1,4 @@
-package nef_test
+package luna
 
 import (
 	"fmt"

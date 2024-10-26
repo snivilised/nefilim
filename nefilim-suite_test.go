@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -14,6 +13,7 @@ import (
 	. "github.com/onsi/gomega"    //nolint:revive // ok
 	nef "github.com/snivilised/nefilim"
 	lab "github.com/snivilised/nefilim/internal/laboratory"
+	"github.com/snivilised/nefilim/test/luna"
 )
 
 func TestNefilim(t *testing.T) {
@@ -93,6 +93,23 @@ func require(root, parent string, files ...string) error {
 	return nil
 }
 
+func requires(fS nef.WriterFS, root, parent string, files ...string) error {
+	if err := fS.MakeDirAll(filepath.Join(root, parent), lab.Perms.Dir.Perm()); err != nil {
+		return fmt.Errorf("failed to create directory: %q (%w)", parent, err)
+	}
+
+	for _, name := range files {
+		handle, err := os.Create(filepath.Join(root, name))
+		if err != nil {
+			return fmt.Errorf("failed to create file: %q (%w)", name, err)
+		}
+
+		handle.Close()
+	}
+
+	return nil
+}
+
 func fakeHomeResolver() (string, error) {
 	return fakeHome, nil
 }
@@ -109,6 +126,14 @@ func fakeAbsResolver(path string) (string, error) {
 	return path, nil
 }
 
+func errorHomeResolver() (string, error) {
+	return "", errors.New("failed to resolve home")
+}
+
+func errorAbsResolver(_ string) (string, error) {
+	return "", errors.New("failed to resolve abs")
+}
+
 func TrimRoot(root string) string {
 	// omit leading '/', because test-fs stupidly doesn't like it,
 	// so we have to jump through hoops
@@ -120,31 +145,6 @@ func TrimRoot(root string) string {
 	re := regexp.MustCompile(pattern)
 
 	return re.ReplaceAllString(root, "")
-}
-
-// Path creates a path from the parent combined with the relative path. The relative
-// path is a file system path so should only contain forward slashes, not the standard
-// file path separator as denoted by filepath.Separator, typically used when interacting
-// with the local file system. Do not use trailing "/".
-func Path(parent, relative string) string {
-	if relative == "" {
-		return parent
-	}
-
-	return parent + "/" + relative
-}
-
-// Repo gets the path of the repo with relative joined on
-func Repo(relative string) string {
-	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
-	output, _ := cmd.Output()
-	repo := strings.TrimSpace(string(output))
-
-	return Path(repo, relative)
-}
-
-func Join(segments ...string) string {
-	return strings.Join(segments, "/")
 }
 
 func Normalise(p string) string {
@@ -160,12 +160,7 @@ func Reason(name string) string {
 }
 
 func Log() string {
-	return Repo("Test/test.log")
-}
-
-func IsLinkError(err error, reason string) {
-	var linkErr *os.LinkError
-	Expect(errors.As(err, &linkErr)).To(BeTrue(), fmt.Sprintf("not LinkError, %q", reason))
+	return luna.Repo("Test/test.log")
 }
 
 func IsInvalidPathError(err error, reason string) {

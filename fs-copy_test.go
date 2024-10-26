@@ -4,6 +4,7 @@ import (
 	. "github.com/onsi/ginkgo/v2" //nolint:revive // ok
 
 	nef "github.com/snivilised/nefilim"
+	"github.com/snivilised/nefilim/test/luna"
 )
 
 var _ = Describe("op: copy/all", Ordered, func() {
@@ -13,7 +14,7 @@ var _ = Describe("op: copy/all", Ordered, func() {
 		single string
 	)
 	BeforeAll(func() {
-		root = Repo("test")
+		root = luna.Repo("test")
 	})
 
 	BeforeEach(func() {

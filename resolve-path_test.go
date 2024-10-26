@@ -66,6 +66,41 @@ var _ = Describe("ResolvePath", Ordered, func() {
 		}),
 	)
 
+	DescribeTable("Overrides provided (errors)",
+		func(entry *RPEntry) {
+			mocks := nef.ResolveMocks{
+				HomeFunc: errorHomeResolver,
+				AbsFunc:  errorAbsResolver,
+			}
+
+			if filepath.Separator == '/' {
+				actual := nef.ResolvePath(entry.path, mocks)
+				Expect(actual).To(Equal(entry.expect))
+			} else {
+				normalisedPath := strings.ReplaceAll(entry.path, "/", string(filepath.Separator))
+				normalisedExpect := strings.ReplaceAll(entry.expect, "/", string(filepath.Separator))
+
+				actual := nef.ResolvePath(normalisedPath, mocks)
+				Expect(actual).To(Equal(normalisedExpect))
+			}
+		},
+		func(entry *RPEntry) string {
+			return fmt.Sprintf("🧪 ===> given: '%v', should: '%v'", entry.given, entry.should)
+		},
+		Entry(nil, &RPEntry{
+			given:  "path contains leading ~",
+			should: "return path unmodified",
+			path:   "~/foo",
+			expect: "~/foo",
+		}),
+		Entry(nil, &RPEntry{
+			given:  "path is a valid absolute path",
+			should: "return path unmodified",
+			path:   "/home/rabbitweed/foo",
+			expect: "/home/rabbitweed/foo",
+		}),
+	)
+
 	When("No overrides provided", func() {
 		Context("and: home", func() {
 			It("🧪 should: not fail", func() {

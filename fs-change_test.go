@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"    //nolint:revive // ok
 	nef "github.com/snivilised/nefilim"
 	lab "github.com/snivilised/nefilim/internal/laboratory"
+	"github.com/snivilised/nefilim/test/luna"
 )
 
 // Note [clash/no-clash]: when an item is moved to the destination, clash
@@ -26,7 +27,7 @@ var _ = Describe("op: change", Ordered, func() {
 	)
 
 	BeforeAll(func() {
-		root = Repo("test")
+		root = luna.Repo("test")
 	})
 
 	DescribeTable("fs: UniversalFS",
@@ -68,8 +69,8 @@ var _ = Describe("op: change", Ordered, func() {
 				Expect(fS.Change(entry.from, destination)).To(Succeed(),
 					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 				)
-				Expect(AsDirectory(lab.Static.FS.Change.Destination)).To(ExistInFS(fS))
-				Expect(AsDirectory(destination)).NotTo(ExistInFS(fS))
+				Expect(luna.AsDirectory(lab.Static.FS.Change.Destination)).To(luna.ExistInFS(fS))
+				Expect(luna.AsDirectory(destination)).NotTo(luna.ExistInFS(fS))
 			},
 		}),
 
@@ -87,8 +88,8 @@ var _ = Describe("op: change", Ordered, func() {
 				Expect(fS.Change(entry.from, entry.to)).To(Succeed(),
 					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 				)
-				Expect(AsFile(Join(lab.Static.FS.Scratch, entry.to))).To(ExistInFS(fS))
-				Expect(AsDirectory(entry.to)).NotTo(ExistInFS(fS))
+				Expect(luna.AsFile(luna.Yoke(lab.Static.FS.Scratch, entry.to))).To(luna.ExistInFS(fS))
+				Expect(luna.AsDirectory(entry.to)).NotTo(luna.ExistInFS(fS))
 			},
 		}),
 
@@ -106,9 +107,9 @@ var _ = Describe("op: change", Ordered, func() {
 				Expect(fS.Change(entry.from, entry.to)).To(Succeed(),
 					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 				)
-				file := Join(lab.Static.FS.Scratch, entry.to)
-				Expect(AsFile(file)).To(ExistInFS(fS))
-				Expect(AsDirectory(entry.to)).NotTo(ExistInFS(fS))
+				file := luna.Yoke(lab.Static.FS.Scratch, entry.to)
+				Expect(luna.AsFile(file)).To(luna.ExistInFS(fS))
+				Expect(luna.AsDirectory(entry.to)).NotTo(luna.ExistInFS(fS))
 			},
 		}),
 
@@ -128,8 +129,8 @@ var _ = Describe("op: change", Ordered, func() {
 				Expect(fS.Change(entry.from, destination)).NotTo(Succeed(),
 					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 				)
-				IsLinkError(fS.Change(entry.from, destination), entry.should)
-				Expect(AsDirectory(destination)).NotTo(ExistInFS(fS))
+				luna.IsLinkError(fS.Change(entry.from, destination), entry.should)
+				Expect(luna.AsDirectory(destination)).NotTo(luna.ExistInFS(fS))
 			},
 		}),
 
@@ -147,7 +148,7 @@ var _ = Describe("op: change", Ordered, func() {
 				)).To(Succeed())
 				Expect(require(root,
 					entry.require,
-					Join(lab.Static.FS.Scratch, entry.to),
+					luna.Yoke(lab.Static.FS.Scratch, entry.to),
 				)).To(Succeed())
 			},
 			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
@@ -156,12 +157,12 @@ var _ = Describe("op: change", Ordered, func() {
 					Expect(err).To(Succeed(),
 						fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 					)
-					Expect(AsFile(entry.from)).NotTo(ExistInFS(fS))
+					Expect(luna.AsFile(entry.from)).NotTo(luna.ExistInFS(fS))
 
 					return
 				}
 				Expect(nef.IsBinaryFsOpError(err)).To(BeTrue())
-				Expect(AsFile(entry.from)).To(ExistInFS(fS))
+				Expect(luna.AsFile(entry.from)).To(luna.ExistInFS(fS))
 			},
 		}),
 
@@ -253,8 +254,5 @@ var _ = Describe("op: change", Ordered, func() {
 				)
 			},
 		}),
-
-		// ===> may have to repeat the above to cover successful cases where to
-		// does not contains a different directory, but these may already be covered.
 	)
 })

@@ -13,6 +13,8 @@ import (
 	"github.com/snivilised/nefilim/internal/third/lo"
 )
 
+// 📦 pkg: luna
+
 // MemFS is a memory fs based on fstest.MapFS intended to be used in
 // unit tests. Clients can embed and override the methods defined here
 // without having to provide a full implementation from scratch.
