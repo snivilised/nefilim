@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"    //nolint:revive // ok
 	nef "github.com/snivilised/nefilim"
 	lab "github.com/snivilised/nefilim/internal/laboratory"
+	"github.com/snivilised/nefilim/test/luna"
 )
 
 // NB: these tests should NEVER be run in parallel because they interact with
@@ -16,7 +17,7 @@ var _ = Describe("file systems", Ordered, func() {
 	var root string
 
 	BeforeAll(func() {
-		root = Repo("test")
+		root = luna.Repo("test")
 	})
 
 	Context("fs: StatFS", func() {
@@ -57,13 +58,13 @@ var _ = Describe("file systems", Ordered, func() {
 		Context("op: FileExists", func() {
 			When("given: existing path", func() {
 				It("🧪 should: return true", func() {
-					Expect(AsFile(lab.Static.FS.Existing.File)).To(ExistInFS(fS))
+					Expect(luna.AsFile(lab.Static.FS.Existing.File)).To(luna.ExistInFS(fS))
 				})
 			})
 
 			When("given: path does not exist", func() {
 				It("🧪 should: return false", func() {
-					Expect(AsFile(lab.Static.Foo)).NotTo(ExistInFS(fS))
+					Expect(luna.AsFile(lab.Static.Foo)).NotTo(luna.ExistInFS(fS))
 				})
 			})
 		})
@@ -71,13 +72,13 @@ var _ = Describe("file systems", Ordered, func() {
 		Context("op: DirectoryExists", func() {
 			When("given: existing path", func() {
 				It("🧪 should: return true", func() {
-					Expect(AsDirectory(lab.Static.FS.Existing.Directory)).To(ExistInFS(fS))
+					Expect(luna.AsDirectory(lab.Static.FS.Existing.Directory)).To(luna.ExistInFS(fS))
 				})
 			})
 
 			When("given: path does not exist", func() {
 				It("🧪 should: return false", func() {
-					Expect(AsDirectory(lab.Static.Foo)).NotTo(ExistInFS(fS))
+					Expect(luna.AsDirectory(lab.Static.Foo)).NotTo(luna.ExistInFS(fS))
 				})
 			})
 		})
@@ -115,6 +116,56 @@ var _ = Describe("file systems", Ordered, func() {
 				It("🧪 should: ", func() {
 
 				})
+			})
+		})
+	})
+
+	Context("MakeDirFS", func() {
+		Context("New", func() {
+			It("🧪 should: create", func() {
+				Expect(nef.NewMakeDirFS(nef.Rel{
+					Root: root,
+				})).NotTo(BeNil())
+			})
+		})
+	})
+
+	Context("ReaderFS", func() {
+		Context("New", func() {
+			It("🧪 should: create", func() {
+				Expect(nef.NewReaderFS(nef.Rel{
+					Root: root,
+				})).NotTo(BeNil())
+			})
+		})
+	})
+
+	Context("WriterFS", func() {
+		Context("New", func() {
+			It("🧪 should: create", func() {
+				Expect(nef.NewWriterFS(nef.Rel{
+					Root: root,
+				})).NotTo(BeNil())
+			})
+		})
+	})
+
+	Context("ReadDirFS", func() {
+		Context("New", func() {
+			It("🧪 should: create", func() {
+				Expect(nef.NewReadDirFS(nef.Rel{
+					Root: root,
+				})).NotTo(BeNil())
+			})
+		})
+	})
+
+	Context("TraverseFS", func() {
+		Context("New", func() {
+			It("🧪 should: create", func() {
+				Expect(nef.NewTraverseFS(nef.Rel{
+					Root: root,
+				})).NotTo(BeNil())
 			})
 		})
 	})

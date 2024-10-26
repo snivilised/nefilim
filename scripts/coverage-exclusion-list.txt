@@ -1,4 +1,5 @@
-github.com/snivilised/nefilim/luna
 github.com/snivilised/nefilim/fs-absolute.go
 github.com/snivilised/nefilim/internal/third
 github.com/snivilised/nefilim/internal/laboratory
+github.com/snivilised/nefilim/resolve-mocks.go
+github.com/snivilised/nefilim/test/luna

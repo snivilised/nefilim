@@ -10,6 +10,7 @@ import (
 	. "github.com/onsi/gomega"    //nolint:revive // ok
 	nef "github.com/snivilised/nefilim"
 	lab "github.com/snivilised/nefilim/internal/laboratory"
+	"github.com/snivilised/nefilim/test/luna"
 )
 
 var _ = Describe("op: remove", Ordered, func() {
@@ -19,7 +20,7 @@ var _ = Describe("op: remove", Ordered, func() {
 	)
 
 	BeforeAll(func() {
-		root = Repo("test")
+		root = luna.Repo("test")
 	})
 
 	BeforeEach(func() {

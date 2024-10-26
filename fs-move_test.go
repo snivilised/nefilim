@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"    //nolint:revive // ok
 	nef "github.com/snivilised/nefilim"
 	lab "github.com/snivilised/nefilim/internal/laboratory"
+	"github.com/snivilised/nefilim/test/luna"
 )
 
 // Note [clash/no-clash]: when an item is moved to the destination, clash
@@ -26,7 +27,7 @@ var _ = Describe("op: move", Ordered, func() {
 	)
 
 	BeforeAll(func() {
-		root = Repo("test")
+		root = luna.Repo("test")
 	})
 
 	DescribeTable("fs: UniversalFS",
@@ -69,7 +70,7 @@ var _ = Describe("op: move", Ordered, func() {
 				Expect(fS.Move(entry.from, lab.Static.FS.Move.Destination)).To(Succeed(),
 					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 				)
-				Expect(AsFile(lab.Static.FS.Move.To.File)).To(ExistInFS(fS))
+				Expect(luna.AsFile(lab.Static.FS.Move.To.File)).To(luna.ExistInFS(fS))
 			},
 		}),
 
@@ -96,7 +97,7 @@ var _ = Describe("op: move", Ordered, func() {
 					Expect(fS.Move(entry.from, lab.Static.FS.Move.Destination)).To(Succeed(),
 						fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 					)
-					Expect(AsFile(lab.Static.FS.Move.To.File)).To(ExistInFS(fS))
+					Expect(luna.AsFile(lab.Static.FS.Move.To.File)).To(luna.ExistInFS(fS))
 					return
 				}
 				Expect(fS.Move(entry.from, lab.Static.FS.Move.Destination)).NotTo(Succeed())
@@ -120,7 +121,7 @@ var _ = Describe("op: move", Ordered, func() {
 				Expect(fS.Move(entry.from, destination)).To(Succeed(),
 					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 				)
-				Expect(AsFile(destination)).To(ExistInFS(fS))
+				Expect(luna.AsFile(destination)).To(luna.ExistInFS(fS))
 			},
 		}),
 
@@ -151,7 +152,7 @@ var _ = Describe("op: move", Ordered, func() {
 					Expect(fS.Move(entry.from, destination)).To(Succeed(),
 						fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 					)
-					Expect(AsFile(destination)).To(ExistInFS(fS))
+					Expect(luna.AsFile(destination)).To(luna.ExistInFS(fS))
 					return
 				}
 				Expect(fS.Move(entry.from, destination)).NotTo(Succeed(),
@@ -176,7 +177,7 @@ var _ = Describe("op: move", Ordered, func() {
 				Expect(fS.Move(entry.from, lab.Static.FS.Move.Destination)).To(Succeed(),
 					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 				)
-				Expect(AsDirectory(lab.Static.FS.Move.To.Directory)).To(ExistInFS(fS))
+				Expect(luna.AsDirectory(lab.Static.FS.Move.To.Directory)).To(luna.ExistInFS(fS))
 			},
 		}),
 
@@ -224,7 +225,7 @@ var _ = Describe("op: move", Ordered, func() {
 				Expect(fS.Move(entry.from, destination)).To(Succeed(),
 					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 				)
-				Expect(AsDirectory(destination)).To(ExistInFS(fS))
+				Expect(luna.AsDirectory(destination)).To(luna.ExistInFS(fS))
 			},
 		}),
 

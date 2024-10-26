@@ -5,13 +5,14 @@ import (
 	. "github.com/onsi/gomega"    //nolint:revive // ok
 	nef "github.com/snivilised/nefilim"
 	lab "github.com/snivilised/nefilim/internal/laboratory"
+	"github.com/snivilised/nefilim/test/luna"
 )
 
 var _ = Describe("op: write-file", Ordered, func() {
 	var root string
 
 	BeforeAll(func() {
-		root = Repo("test")
+		root = luna.Repo("test")
 	})
 
 	Context("fs: WriteFileFS", func() {
@@ -37,7 +38,7 @@ var _ = Describe("op: write-file", Ordered, func() {
 						Expect(fS.WriteFile(
 							name, lab.Static.FS.Write.Content, lab.Perms.File.Perm(),
 						)).To(Succeed())
-						Expect(AsFile(name)).To(ExistInFS(fS))
+						Expect(luna.AsFile(name)).To(luna.ExistInFS(fS))
 					})
 				})
 			})

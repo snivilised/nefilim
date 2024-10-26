@@ -7,13 +7,14 @@ import (
 	. "github.com/onsi/gomega"    //nolint:revive // ok
 	nef "github.com/snivilised/nefilim"
 	lab "github.com/snivilised/nefilim/internal/laboratory"
+	"github.com/snivilised/nefilim/test/luna"
 )
 
 var _ = Describe("op: make-dir/all", Ordered, func() {
 	var root string
 
 	BeforeAll(func() {
-		root = Repo("test")
+		root = luna.Repo("test")
 	})
 
 	Context("tentative", func() {
@@ -38,7 +39,7 @@ var _ = Describe("op: make-dir/all", Ordered, func() {
 							Succeed(), fmt.Sprintf("failed to MakeDir %q", path),
 						)
 
-						Expect(AsDirectory(path)).To(ExistInFS(fS))
+						Expect(luna.AsDirectory(path)).To(luna.ExistInFS(fS))
 					})
 				})
 
@@ -60,7 +61,7 @@ var _ = Describe("op: make-dir/all", Ordered, func() {
 							Succeed(), fmt.Sprintf("failed to MakeDir %q", path),
 						)
 
-						Expect(AsDirectory(path)).To(ExistInFS(fS))
+						Expect(luna.AsDirectory(path)).To(luna.ExistInFS(fS))
 					})
 				})
 
@@ -71,7 +72,7 @@ var _ = Describe("op: make-dir/all", Ordered, func() {
 							Succeed(), fmt.Sprintf("failed to MakeDir %q", path),
 						)
 
-						Expect(AsDirectory(path)).To(ExistInFS(fS))
+						Expect(luna.AsDirectory(path)).To(luna.ExistInFS(fS))
 					})
 				})
 			})

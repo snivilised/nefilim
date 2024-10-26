@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"    //nolint:revive // ok
 	nef "github.com/snivilised/nefilim"
 	lab "github.com/snivilised/nefilim/internal/laboratory"
+	"github.com/snivilised/nefilim/test/luna"
 )
 
 var _ = Describe("op: rename", Ordered, func() {
@@ -16,7 +17,7 @@ var _ = Describe("op: rename", Ordered, func() {
 	)
 
 	BeforeAll(func() {
-		root = Repo("test")
+		root = luna.Repo("test")
 	})
 
 	BeforeEach(func() {
@@ -55,7 +56,7 @@ var _ = Describe("op: rename", Ordered, func() {
 				Expect(require(root, lab.Static.FS.Move.Destination)).To(Succeed())
 			},
 			action: func(entry fsTE[nef.RenameFS], fS nef.RenameFS) {
-				IsLinkError(fS.Rename(entry.from, lab.Static.FS.Move.Destination), entry.should)
+				luna.IsLinkError(fS.Rename(entry.from, lab.Static.FS.Move.Destination), entry.should)
 			},
 		}),
 
@@ -78,7 +79,7 @@ var _ = Describe("op: rename", Ordered, func() {
 				)).To(Succeed())
 			},
 			action: func(entry fsTE[nef.RenameFS], fS nef.RenameFS) {
-				IsLinkError(fS.Rename(entry.from, lab.Static.FS.Move.Destination), entry.should)
+				luna.IsLinkError(fS.Rename(entry.from, lab.Static.FS.Move.Destination), entry.should)
 			},
 		}),
 
@@ -97,7 +98,7 @@ var _ = Describe("op: rename", Ordered, func() {
 			action: func(entry fsTE[nef.RenameFS], fS nef.RenameFS) {
 				destination := lab.Static.FS.Move.To.File
 				Expect(fS.Rename(entry.from, destination)).To(Succeed())
-				Expect(AsFile(destination)).To(ExistInFS(fS))
+				Expect(luna.AsFile(destination)).To(luna.ExistInFS(fS))
 			},
 		}),
 
@@ -123,7 +124,7 @@ var _ = Describe("op: rename", Ordered, func() {
 			},
 			action: func(entry fsTE[nef.RenameFS], fS nef.RenameFS) {
 				Expect(fS.Rename(entry.from, lab.Static.FS.Move.To.File)).To(Succeed())
-				Expect(AsFile(lab.Static.FS.Move.From.File)).NotTo(ExistInFS(fS))
+				Expect(luna.AsFile(lab.Static.FS.Move.From.File)).NotTo(luna.ExistInFS(fS))
 			},
 		}),
 
@@ -140,7 +141,7 @@ var _ = Describe("op: rename", Ordered, func() {
 				Expect(require(root, lab.Static.FS.Move.Destination)).To(Succeed())
 			},
 			action: func(entry fsTE[nef.RenameFS], fS nef.RenameFS) {
-				IsLinkError(fS.Rename(entry.from, lab.Static.FS.Move.Destination), entry.should)
+				luna.IsLinkError(fS.Rename(entry.from, lab.Static.FS.Move.Destination), entry.should)
 			},
 		}),
 
@@ -158,8 +159,8 @@ var _ = Describe("op: rename", Ordered, func() {
 				Expect(require(root, lab.Static.FS.Move.To.Directory)).To(Succeed())
 			},
 			action: func(entry fsTE[nef.RenameFS], fS nef.RenameFS) {
-				IsLinkError(fS.Rename(entry.from, lab.Static.FS.Move.Destination), entry.should)
-				Expect(AsDirectory(lab.Static.FS.Move.From.Directory)).To(ExistInFS(fS))
+				luna.IsLinkError(fS.Rename(entry.from, lab.Static.FS.Move.Destination), entry.should)
+				Expect(luna.AsDirectory(lab.Static.FS.Move.From.Directory)).To(luna.ExistInFS(fS))
 			},
 		}),
 
@@ -178,7 +179,7 @@ var _ = Describe("op: rename", Ordered, func() {
 			action: func(entry fsTE[nef.RenameFS], fS nef.RenameFS) {
 				destination := lab.Static.FS.Move.To.Directory
 				Expect(fS.Rename(entry.from, destination)).To(Succeed())
-				Expect(AsDirectory(destination)).To(ExistInFS(fS))
+				Expect(luna.AsDirectory(destination)).To(luna.ExistInFS(fS))
 			},
 		}),
 
@@ -198,7 +199,7 @@ var _ = Describe("op: rename", Ordered, func() {
 			action: func(entry fsTE[nef.RenameFS], fS nef.RenameFS) {
 				destination := lab.Static.FS.Move.To.Directory
 				Expect(fS.Rename(entry.from, destination)).NotTo(Succeed())
-				Expect(AsDirectory(lab.Static.FS.Move.From.Directory)).To(ExistInFS(fS))
+				Expect(luna.AsDirectory(lab.Static.FS.Move.From.Directory)).To(luna.ExistInFS(fS))
 			},
 		}),
 
@@ -262,7 +263,7 @@ var _ = Describe("op: rename", Ordered, func() {
 				Expect(require(root, entry.require)).To(Succeed())
 			},
 			action: func(entry fsTE[nef.RenameFS], fS nef.RenameFS) {
-				IsLinkError(fS.Rename(entry.from, entry.to), entry.should)
+				luna.IsLinkError(fS.Rename(entry.from, entry.to), entry.should)
 			},
 		}),
 	)

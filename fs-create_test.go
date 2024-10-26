@@ -7,13 +7,14 @@ import (
 	. "github.com/onsi/gomega"    //nolint:revive // ok
 	nef "github.com/snivilised/nefilim"
 	lab "github.com/snivilised/nefilim/internal/laboratory"
+	"github.com/snivilised/nefilim/test/luna"
 )
 
 var _ = Describe("op: create", Ordered, func() {
 	var root string
 
 	BeforeAll(func() {
-		root = Repo("test")
+		root = luna.Repo("test")
 	})
 
 	Context("fs: WriteFileFS", func() {
@@ -40,7 +41,7 @@ var _ = Describe("op: create", Ordered, func() {
 						Expect(err).To(Succeed())
 						defer file.Close()
 
-						Expect(AsFile(name)).To(ExistInFS(fS))
+						Expect(luna.AsFile(name)).To(luna.ExistInFS(fS))
 					})
 				})
 
@@ -54,7 +55,7 @@ var _ = Describe("op: create", Ordered, func() {
 						Expect(err).To(Succeed())
 						defer file.Close()
 
-						Expect(AsFile(name)).To(ExistInFS(fS))
+						Expect(luna.AsFile(name)).To(luna.ExistInFS(fS))
 					})
 				})
 			})
