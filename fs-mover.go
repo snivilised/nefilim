@@ -2,7 +2,6 @@ package nef
 
 import (
 	"os"
-	"path/filepath"
 	"sync"
 
 	"github.com/snivilised/nefilim/internal/third/lo"
@@ -32,6 +31,7 @@ type (
 	baseMover struct {
 		root    string
 		fS      MoverFS
+		calc    PathCalc
 		actions movers
 	}
 )
@@ -81,13 +81,13 @@ func (m *baseMover) moveItemWithName(from, to string) error {
 	// 'to' includes the file name eg:
 	// from/file.txt => to/file.txt
 	//
-	if filepath.Dir(from) == filepath.Dir(to) {
+	if m.calc.Dir(from) == m.calc.Dir(to) {
 		return NewRejectSameDirMoveError(moveOpName, from, to)
 	}
 
 	return os.Rename(
-		filepath.Join(m.root, from),
-		filepath.Join(m.root, to),
+		m.calc.Join(m.root, from),
+		m.calc.Join(m.root, to),
 	)
 }
 
@@ -96,14 +96,14 @@ func (m *baseMover) moveItemWithoutName(from, to string) error {
 	// from/file.txt => to/
 	//
 	return os.Rename(
-		filepath.Join(m.root, from),
-		filepath.Join(m.root, to, filepath.Base(from)),
+		m.calc.Join(m.root, from),
+		m.calc.Join(m.root, to, m.calc.Base(from)),
 	)
 }
 
 func (m *baseMover) moveItemWithoutNameClash(from, to string) error {
-	fromBase := filepath.Base(from)
-	toBase := filepath.Base(to)
+	fromBase := m.calc.Base(from)
+	toBase := m.calc.Base(to)
 
 	if fromBase == toBase {
 		// If there were a merge facility, this is where we would implement this,
@@ -129,12 +129,14 @@ func (l *lazyMover) instance(root string, overwrite bool, fS MoverFS) mover {
 }
 
 func (l *lazyMover) create(root string, overwrite bool, fS MoverFS) mover {
+	calc := fS.Calc()
 	return lo.TernaryF(overwrite,
 		func() mover {
 			return &overwriteMover{
 				baseMover: baseMover{
 					root: root,
 					fS:   fS,
+					calc: calc,
 				},
 			}
 		},
@@ -143,6 +145,7 @@ func (l *lazyMover) create(root string, overwrite bool, fS MoverFS) mover {
 				baseMover: baseMover{
 					root: root,
 					fS:   fS,
+					calc: calc,
 				},
 			}
 		},

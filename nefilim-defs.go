@@ -28,8 +28,14 @@ type (
 		T TraverseFS
 	}
 
+	// FSPathCalc the path calculator used by the FS
+	FSPathCalc interface {
+		Calc() PathCalc
+	}
+
 	// ExistsInFS contains methods that check the existence of file system items.
 	ExistsInFS interface {
+		FSPathCalc
 		// FileExists does file exist at the path specified
 		FileExists(name string) bool
 

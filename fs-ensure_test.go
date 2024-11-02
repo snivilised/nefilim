@@ -1,6 +1,7 @@
 package nef_test
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 
@@ -62,7 +63,7 @@ var _ = Describe("Ensure", Ordered, func() {
 					},
 				)
 				Expect(err).To(Succeed())
-				_, file := filepath.Split(lab.Static.FS.Ensure.Log.File)
+				_, file := fS.Calc().Split(lab.Static.FS.Ensure.Log.File)
 				Expect(result).To(Equal(file))
 			},
 		}),
@@ -77,7 +78,7 @@ var _ = Describe("Ensure", Ordered, func() {
 				Expect(require(root, entry.target)).To(Succeed())
 			},
 			action: func(entry fsTE[nef.MakeDirFS], fS nef.MakeDirFS) {
-				_, file := filepath.Split(lab.Static.FS.Ensure.Default.File)
+				_, file := fS.Calc().Split(lab.Static.FS.Ensure.Default.File)
 				result, err := fS.Ensure(
 					nef.PathAs{
 						Name:    entry.target,
@@ -97,12 +98,12 @@ var _ = Describe("Ensure", Ordered, func() {
 			require: lab.Static.FS.Scratch,
 			target:  lab.Static.FS.Ensure.Log.File,
 			from:    lab.Static.FS.Ensure.Home,
-			arrange: func(entry fsTE[nef.MakeDirFS], _ nef.MakeDirFS) {
-				parent := luna.Yoke(entry.require, entry.from)
+			arrange: func(entry fsTE[nef.MakeDirFS], fS nef.MakeDirFS) {
+				parent := fS.Calc().Join(entry.require, entry.from)
 				Expect(require(root, parent)).To(Succeed())
 			},
 			action: func(entry fsTE[nef.MakeDirFS], fS nef.MakeDirFS) {
-				_, file := filepath.Split(lab.Static.FS.Ensure.Default.File)
+				_, file := fS.Calc().Split(lab.Static.FS.Ensure.Default.File)
 				result, err := fS.Ensure(
 					nef.PathAs{
 						Name:    entry.target,
@@ -114,7 +115,7 @@ var _ = Describe("Ensure", Ordered, func() {
 				Expect(err).To(Succeed())
 				ensureAt := lab.Static.FS.Ensure.Default.Directory
 				Expect(luna.AsDirectory(ensureAt)).To(luna.ExistInFS(fS))
-				_, file = filepath.Split(entry.target)
+				_, file = fS.Calc().Split(entry.target)
 				Expect(result).To(Equal(file))
 			},
 		}),
@@ -127,11 +128,11 @@ var _ = Describe("Ensure", Ordered, func() {
 			target:  lab.Static.FS.Ensure.Log.Directory,
 			from:    lab.Static.FS.Ensure.Home,
 			arrange: func(entry fsTE[nef.MakeDirFS], _ nef.MakeDirFS) {
-				parent := luna.Yoke(entry.require, entry.from)
+				parent := fS.Calc().Join(entry.require, entry.from)
 				Expect(require(root, parent)).To(Succeed())
 			},
 			action: func(entry fsTE[nef.MakeDirFS], fS nef.MakeDirFS) {
-				_, file := filepath.Split(lab.Static.FS.Ensure.Default.File)
+				_, file := fS.Calc().Split(lab.Static.FS.Ensure.Default.File)
 				result, err := fS.Ensure(
 					nef.PathAs{
 						Name:    entry.target,
@@ -144,6 +145,82 @@ var _ = Describe("Ensure", Ordered, func() {
 				Expect(luna.AsDirectory(ensureAt)).To(luna.ExistInFS(fS))
 				Expect(result).To(Equal(file))
 			},
+		}),
+	)
+})
+
+var _ = Describe("Ensure", Ordered, func() {
+	const (
+		home = "home/prodigy"
+	)
+
+	var (
+		mocks *nef.ResolveMocks
+		fS    nef.UniversalFS
+		calc  nef.PathCalc
+		root  string
+	)
+
+	BeforeAll(func() {
+		root = luna.Repo("test")
+	})
+
+	BeforeEach(func() {
+		fS = nef.NewUniversalABS()
+		calc = fS.Calc()
+
+		scratch(root)
+
+		mocks = &nef.ResolveMocks{
+			HomeFunc: func() (string, error) {
+				return calc.Join(root, "scratch", home), nil
+			},
+			AbsFunc: func(_ string) (string, error) {
+				return "", errors.New("not required for these tests")
+			},
+		}
+	})
+
+	DescribeTable("with absolute fs",
+		func(entry *ensureTE) {
+			home, _ := mocks.HomeFunc()
+			location := calc.Join(home, entry.relative)
+
+			if entry.directory {
+				location += string(filepath.Separator)
+			}
+
+			actual, err := fS.Ensure(nef.PathAs{
+				Name:    location,
+				Default: "default-test.log",
+				Perm:    lab.Perms.Dir,
+			})
+
+			directory, _ := calc.Split(actual)
+			directory = calc.Clean(directory)
+			expected := luna.Combine(home, entry.expected)
+
+			Expect(err).Error().To(BeNil())
+			Expect(actual).To(Equal(expected))
+			Expect(luna.AsDirectory(directory)).To(luna.ExistInFS(fS))
+		},
+		func(entry *ensureTE) string {
+			return fmt.Sprintf("🧪 ===> given: '%v', should: '%v'", entry.given, entry.should)
+		},
+
+		Entry(nil, &ensureTE{
+			given:    "path is file",
+			should:   "create parent directory and return specified file path",
+			relative: filepath.Join("logs", "test.log"), // (can't use calc here, not set yet)
+			expected: "logs/test.log",
+		}),
+
+		Entry(nil, &ensureTE{
+			given:     "path is directory",
+			should:    "create parent directory and return default file path",
+			relative:  "logs/",
+			directory: true,
+			expected:  "logs/default-test.log",
 		}),
 	)
 })

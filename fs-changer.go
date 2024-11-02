@@ -2,7 +2,6 @@ package nef
 
 import (
 	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 
@@ -81,8 +80,8 @@ func (m *baseChanger) rename(from, to string) error {
 	}
 
 	return os.Rename(
-		filepath.Join(m.root, from),
-		filepath.Join(m.root, destination),
+		m.calc.Join(m.root, from),
+		m.calc.Join(m.root, destination),
 	)
 }
 
@@ -102,12 +101,15 @@ func (l *lazyChanger) instance(root string, overwrite bool, fS ChangerFS) change
 func (l *lazyChanger) create(root string, overwrite bool, fS ChangerFS) changer {
 	// create an interface for this function
 	//
+	calc := fS.Calc()
+
 	return lo.TernaryF(overwrite,
 		func() changer {
 			return &overwriteChanger{
 				baseChanger: baseChanger{
 					baseOp: baseOp[ChangerFS]{
 						fS:   fS,
+						calc: calc,
 						root: root,
 					},
 				},
@@ -118,6 +120,7 @@ func (l *lazyChanger) create(root string, overwrite bool, fS ChangerFS) changer 
 				baseChanger: baseChanger{
 					baseOp: baseOp[ChangerFS]{
 						fS:   fS,
+						calc: calc,
 						root: root,
 					},
 				},

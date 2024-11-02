@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path/filepath"
 )
 
 // 🔥 An important note about using standard golang file systems (io.fs/fs.FS)
@@ -30,7 +29,8 @@ import (
 // is the local file system. This means that paths used only need to use '/'. And
 // the silly thing is, characters like ':', or '\' for windows should not be
 // treated as separators by the underlying file system. So really using
-// filepath.Separator with a virtual file system is not valid.
+// filepath.Separator with a virtual file system is not valid. This is why
+// there is a PathCalc.
 //
 
 func sanitise(root string) string {
@@ -43,6 +43,7 @@ func sanitise(root string) string {
 type openFS struct {
 	fS   fs.FS
 	root string
+	calc PathCalc
 }
 
 func (f *openFS) Open(name string) (fs.File, error) {
@@ -56,13 +57,17 @@ type statFS struct {
 	*openFS
 }
 
+func (f *openFS) Calc() PathCalc {
+	return f.calc
+}
+
 func NewStatFS(rel Rel) fs.StatFS {
 	ents := compose(sanitise(rel.Root))
 	return &ents.stat
 }
 
 func (f *statFS) Stat(name string) (fs.FileInfo, error) {
-	return os.Stat(filepath.Join(f.root, name))
+	return os.Stat(f.calc.Join(f.root, name))
 }
 
 // 🧩 ---> file system query
@@ -128,6 +133,11 @@ func NewExistsInFS(rel Rel) ExistsInFS {
 	ents := compose(sanitise(rel.Root))
 
 	return &ents.exists
+}
+
+func (f *existsInFS) Calc() PathCalc {
+	// disambiguator
+	return f.statFS.calc
 }
 
 // FileExists does file exist at the path specified
@@ -219,6 +229,11 @@ func NewMakeDirFS(rel Rel) MakeDirFS {
 	return &ents.writer
 }
 
+func (f *makeDirAllFS) Calc() PathCalc {
+	// disambiguator
+	return f.statFS.calc
+}
+
 // Mkdir creates a new directory with the specified name and permission
 // bits (before umask).
 // If there is an error, it will be of type *PathError.
@@ -231,7 +246,7 @@ func (f *makeDirAllFS) MakeDir(name string, perm os.FileMode) error {
 		return nil
 	}
 
-	path := filepath.Join(f.statFS.root, name)
+	path := f.statFS.calc.Join(f.statFS.root, name)
 	return os.Mkdir(path, perm)
 }
 
@@ -250,7 +265,7 @@ func (f *makeDirAllFS) MakeDirAll(name string, perm os.FileMode) error {
 	if f.DirectoryExists(name) {
 		return nil
 	}
-	path := filepath.Join(f.statFS.root, name)
+	path := f.statFS.calc.Join(f.statFS.root, name)
 	return os.MkdirAll(path, perm)
 }
 
@@ -278,7 +293,7 @@ func (f *makeDirAllFS) Ensure(as PathAs,
 	)
 
 	if f.FileExists(as.Name) {
-		_, file = filepath.Split(as.Name)
+		_, file = f.statFS.calc.Split(as.Name)
 
 		return file, nil
 	}
@@ -307,7 +322,7 @@ func (f *removeFS) Remove(name string) error {
 		return NewInvalidPathError("Remove", name)
 	}
 
-	path := filepath.Join(f.root, filepath.Clean(name))
+	path := f.calc.Join(f.root, f.calc.Clean(name))
 	return os.Remove(path)
 }
 
@@ -316,7 +331,7 @@ func (f *removeFS) RemoveAll(path string) error {
 		return NewInvalidPathError("RemoveAll", path)
 	}
 
-	return os.RemoveAll(filepath.Join(f.root, filepath.Clean(path)))
+	return os.RemoveAll(f.calc.Join(f.root, f.calc.Clean(path)))
 }
 
 // 🎯 renameFS
@@ -327,10 +342,10 @@ type renameFS struct {
 
 // Rename delegates to the Rename functionality implemented in the standard
 // library.
-func (s *renameFS) Rename(from, to string) error {
+func (f *renameFS) Rename(from, to string) error {
 	return os.Rename(
-		filepath.Join(s.root, from),
-		filepath.Join(s.root, to),
+		f.calc.Join(f.root, from),
+		f.calc.Join(f.root, to),
 	)
 }
 
@@ -368,7 +383,7 @@ func (f *writeFileFS) Create(name string) (fs.File, error) {
 		return nil, os.ErrExist
 	}
 
-	path := filepath.Join(f.root, name)
+	path := f.calc.Join(f.root, name)
 	return os.Create(path)
 }
 
@@ -382,7 +397,7 @@ func (f *writeFileFS) WriteFile(name string, data []byte, perm os.FileMode) erro
 		return NewInvalidPathError("WriteFile", name)
 	}
 
-	path := filepath.Join(f.root, name)
+	path := f.calc.Join(f.root, name)
 	return os.WriteFile(path, data, perm)
 }
 
@@ -394,6 +409,11 @@ type readerFS struct {
 	*readDirFS
 	*readFileFS
 	*statFS
+}
+
+func (f *readerFS) Calc() PathCalc {
+	// disambiguator
+	return f.statFS.calc
 }
 
 // NewReaderFS
@@ -408,6 +428,11 @@ type aggregatorFS struct {
 	*baseWriterFS
 	mover   lazyMover
 	changer lazyChanger
+}
+
+func (f *aggregatorFS) Calc() PathCalc {
+	// disambiguator
+	return f.statFS.calc
 }
 
 // Move is similar to rename but it has distinctly different semantics, which
@@ -450,10 +475,20 @@ func NewWriterFS(rel Rel) WriterFS {
 	return &ents.writer
 }
 
+func (f *writerFS) Calc() PathCalc {
+	// disambiguator
+	return f.statFS.calc
+}
+
 // 🎯 mutatorFS
 type mutatorFS struct {
 	*readerFS
 	*writerFS
+}
+
+func (f *mutatorFS) Calc() PathCalc {
+	// disambiguator
+	return f.statFS.calc
 }
 
 func newMutatorFS(rel *Rel) *mutatorFS {
@@ -524,6 +559,9 @@ func compose(root string) *entities {
 	open := openFS{
 		fS:   os.DirFS(root),
 		root: root,
+		calc: &RelativeCalc{
+			Root: root,
+		},
 	}
 	read := readDirFS{
 		openFS: &open,

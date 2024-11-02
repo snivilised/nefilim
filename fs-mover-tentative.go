@@ -1,9 +1,5 @@
 package nef
 
-import (
-	"path/filepath"
-)
-
 type tentativeMover struct {
 	baseMover
 }
@@ -24,7 +20,7 @@ func (m *tentativeMover) moveDirectoryWithName(from, to string) error {
 	// 'to' includes the file name eg:
 	// from/file.txt => to/file.txt
 	//
-	if filepath.Dir(from) == filepath.Dir(to) {
+	if m.calc.Dir(from) == m.calc.Dir(to) {
 		return NewRejectSameDirMoveError(moveOpName, from, to)
 	}
 
@@ -35,7 +31,7 @@ func (m *tentativeMover) moveItemWithoutName(from, to string) error {
 	// 'to' does not include the file name, so it has to be appended, eg:
 	// from/file.txt => to/
 	//
-	if _, err := m.fS.Stat(filepath.Join(to, filepath.Base(from))); err == nil {
+	if _, err := m.fS.Stat(m.calc.Join(to, m.calc.Base(from))); err == nil {
 		return NewInvalidBinaryFsOpError("Move", from, to)
 	}
 
@@ -47,7 +43,7 @@ func (m *tentativeMover) rejectOverwriteOrNoOp(from, to string) error {
 	// they are not in the same location then we reject the overwrite attempt
 	// otherwise they are the same item and this should effectively be a no op.
 	//
-	if filepath.Dir(from) != filepath.Dir(to) {
+	if m.calc.Dir(from) != m.calc.Dir(to) {
 		return NewInvalidBinaryFsOpError(moveOpName, from, to)
 	}
 

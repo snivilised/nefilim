@@ -20,6 +20,7 @@ import (
 // without having to provide a full implementation from scratch.
 type MemFS struct {
 	fstest.MapFS
+	calc nef.PathCalc
 }
 
 var (
@@ -30,6 +31,10 @@ func NewMemFS() *MemFS {
 	return &MemFS{
 		MapFS: fstest.MapFS{},
 	}
+}
+
+func (f *MemFS) Calc() nef.PathCalc {
+	return f.calc
 }
 
 func (f *MemFS) FileExists(name string) bool {
