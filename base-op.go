@@ -2,6 +2,7 @@ package nef
 
 type baseOp[F ExistsInFS] struct {
 	fS   F
+	calc PathCalc
 	root string
 }
 

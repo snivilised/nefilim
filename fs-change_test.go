@@ -2,7 +2,6 @@ package nef_test
 
 import (
 	"fmt"
-	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2" //nolint:revive // ok
 	. "github.com/onsi/gomega"    //nolint:revive // ok
@@ -65,7 +64,7 @@ var _ = Describe("op: change", Ordered, func() {
 				Expect(require(root, entry.from)).To(Succeed())
 			},
 			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
-				destination := filepath.Base(entry.to)
+				destination := fS.Calc().Base(entry.to)
 				Expect(fS.Change(entry.from, destination)).To(Succeed(),
 					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 				)
@@ -88,7 +87,8 @@ var _ = Describe("op: change", Ordered, func() {
 				Expect(fS.Change(entry.from, entry.to)).To(Succeed(),
 					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 				)
-				Expect(luna.AsFile(luna.Yoke(lab.Static.FS.Scratch, entry.to))).To(luna.ExistInFS(fS))
+				calc := fS.Calc()
+				Expect(luna.AsFile(calc.Join(lab.Static.FS.Scratch, entry.to))).To(luna.ExistInFS(fS))
 				Expect(luna.AsDirectory(entry.to)).NotTo(luna.ExistInFS(fS))
 			},
 		}),
@@ -107,7 +107,8 @@ var _ = Describe("op: change", Ordered, func() {
 				Expect(fS.Change(entry.from, entry.to)).To(Succeed(),
 					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 				)
-				file := luna.Yoke(lab.Static.FS.Scratch, entry.to)
+				calc := fS.Calc()
+				file := calc.Join(lab.Static.FS.Scratch, entry.to)
 				Expect(luna.AsFile(file)).To(luna.ExistInFS(fS))
 				Expect(luna.AsDirectory(entry.to)).NotTo(luna.ExistInFS(fS))
 			},
@@ -125,7 +126,7 @@ var _ = Describe("op: change", Ordered, func() {
 				Expect(require(root, entry.to)).To(Succeed())
 			},
 			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
-				destination := filepath.Base(entry.to)
+				destination := fS.Calc().Base(entry.to)
 				Expect(fS.Change(entry.from, destination)).NotTo(Succeed(),
 					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 				)
@@ -141,14 +142,14 @@ var _ = Describe("op: change", Ordered, func() {
 			require: lab.Static.FS.Scratch,
 			from:    lab.Static.FS.Change.From.File,
 			to:      lab.Static.FS.Change.To.File,
-			arrange: func(entry fsTE[nef.UniversalFS], _ nef.UniversalFS) {
+			arrange: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
 				Expect(require(root,
 					entry.require,
 					entry.from,
 				)).To(Succeed())
 				Expect(require(root,
 					entry.require,
-					luna.Yoke(lab.Static.FS.Scratch, entry.to),
+					fS.Calc().Join(lab.Static.FS.Scratch, entry.to),
 				)).To(Succeed())
 			},
 			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {

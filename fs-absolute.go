@@ -3,28 +3,43 @@ package nef
 import (
 	"io/fs"
 	"os"
+	"strings"
 )
 
-type absoluteFS struct{}
+type absoluteFS struct {
+	calc PathCalc
+}
 
 // NewUniversalABS creates an absolute universal file system
 func NewUniversalABS() UniversalFS {
-	return &absoluteFS{}
+	return &absoluteFS{
+		calc: &AbsoluteCalc{},
+	}
 }
 
 // NewTraverseABS creates an absolute traverse file system
 func NewTraverseABS() TraverseFS {
-	return &absoluteFS{}
+	return &absoluteFS{
+		calc: &AbsoluteCalc{},
+	}
 }
 
 // NewReaderABS creates an absolute reader file system
 func NewReaderABS() ReaderFS {
-	return &absoluteFS{}
+	return &absoluteFS{
+		calc: &AbsoluteCalc{},
+	}
 }
 
 // NewWriterABS creates an absolute writer file system
 func NewWriterABS() WriterFS {
-	return &absoluteFS{}
+	return &absoluteFS{
+		calc: &AbsoluteCalc{},
+	}
+}
+
+func (f *absoluteFS) Calc() PathCalc {
+	return f.calc
 }
 
 // FileExists does file exist at the path specified
@@ -103,8 +118,24 @@ func (f *absoluteFS) MakeDirAll(name string, perm os.FileMode) error {
 }
 
 // Ensure is not currently implemented on absoluteFS
-func (f *absoluteFS) Ensure(_ PathAs) (string, error) {
-	panic("NOT-IMPL: absoluteFS.Ensure")
+func (f *absoluteFS) Ensure(as PathAs) (at string, err error) {
+	var (
+		directory, file string
+	)
+	calc := f.calc
+
+	if strings.HasSuffix(as.Name, string(os.PathSeparator)) {
+		directory = as.Name
+		file = as.Default
+	} else {
+		directory, file = calc.Split(as.Name)
+	}
+
+	if !f.DirectoryExists(directory) {
+		err = f.MakeDirAll(directory, as.Perm)
+	}
+
+	return calc.Clean(calc.Join(directory, file)), err
 }
 
 // Move is not currently implemented on absoluteFS

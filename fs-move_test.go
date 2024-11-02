@@ -2,7 +2,6 @@ package nef_test
 
 import (
 	"fmt"
-	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2" //nolint:revive // ok
 	. "github.com/onsi/gomega"    //nolint:revive // ok
@@ -278,7 +277,7 @@ var _ = Describe("op: move", Ordered, func() {
 				Expect(require(root, entry.require, entry.from)).To(Succeed())
 			},
 			action: func(entry fsTE[nef.UniversalFS], fS nef.UniversalFS) {
-				destination := filepath.Join(entry.to, lab.Static.Foo)
+				destination := fS.Calc().Join(entry.to, lab.Static.Foo)
 				Expect(fS.Move(entry.from, destination)).NotTo(Succeed(),
 					fmt.Sprintf("OVERWRITE: %v", entry.overwrite),
 				)

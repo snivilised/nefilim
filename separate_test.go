@@ -15,6 +15,7 @@ import (
 var _ = Describe("Separate", Ordered, func() {
 	var (
 		fS             nef.UniversalFS
+		calc           nef.PathCalc
 		root, separate string
 
 		expectations = struct {
@@ -40,14 +41,16 @@ var _ = Describe("Separate", Ordered, func() {
 	BeforeEach(func() {
 		scratch(root)
 		fS = nef.NewUniversalABS()
+		calc = fS.Calc()
 	})
 
 	When("directory contains mixed entries", func() {
 		It("🧪 should: separate files from directories", func() {
+
 			Expect(requires(fS, root, separate,
-				luna.Yoke(separate, expectations.foo),
-				luna.Yoke(separate, expectations.bar),
-				luna.Yoke(separate, expectations.baz),
+				calc.Join(separate, expectations.foo),
+				calc.Join(separate, expectations.bar),
+				calc.Join(separate, expectations.baz),
 			)).To(Succeed())
 			Expect(requires(fS, root, filepath.Join(separate, "x"))).To(Succeed())
 			Expect(requires(fS, root, filepath.Join(separate, "y"))).To(Succeed())
@@ -76,9 +79,9 @@ var _ = Describe("Separate", Ordered, func() {
 	When("directory contains only file entries", func() {
 		It("🧪 should: return files", func() {
 			Expect(requires(fS, root, separate,
-				luna.Yoke(separate, expectations.foo),
-				luna.Yoke(separate, expectations.bar),
-				luna.Yoke(separate, expectations.baz),
+				calc.Join(separate, expectations.foo),
+				calc.Join(separate, expectations.bar),
+				calc.Join(separate, expectations.baz),
 			)).To(Succeed())
 
 			full := filepath.Join(root, separate)

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -19,6 +18,21 @@ import (
 func TestNefilim(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Nefilim Suite")
+}
+
+type CalcType uint
+
+const (
+	CalcTypeAbsolute CalcType = iota
+	CalcTypeRelative
+)
+
+func (c CalcType) String() string {
+	if c == CalcTypeAbsolute {
+		return "ABSOLUTE"
+	}
+
+	return "RELATIVE"
 }
 
 type (
@@ -35,6 +49,40 @@ type (
 		should string
 		path   string
 		expect string
+	}
+
+	manyResultAction func(calc nef.PathCalc) []string
+
+	singleAsserter func(string)
+	manyAsserter   func([]string)
+	pairAsserter   func(string, string)
+
+	calcTE struct {
+		given  string
+		should string
+	}
+
+	genericCalcTE[I, R string | []string] struct {
+		calcTE
+		input  I
+		expect map[CalcType]R
+	}
+
+	calcVariadicToOneTE struct {
+		calcTE
+		input  []string
+		expect map[CalcType]string
+	}
+
+	pair struct {
+		dir  string
+		file string
+	}
+
+	calcOneToPairTE struct {
+		calcTE
+		input  string
+		expect map[CalcType]pair
 	}
 
 	funcFS[T any] func(entry fsTE[T], fS T)
@@ -132,19 +180,6 @@ func errorHomeResolver() (string, error) {
 
 func errorAbsResolver(_ string) (string, error) {
 	return "", errors.New("failed to resolve abs")
-}
-
-func TrimRoot(root string) string {
-	// omit leading '/', because test-fs stupidly doesn't like it,
-	// so we have to jump through hoops
-	if strings.HasPrefix(root, string(filepath.Separator)) {
-		return root[1:]
-	}
-
-	pattern := `^[a-zA-Z]:[\\/]*`
-	re := regexp.MustCompile(pattern)
-
-	return re.ReplaceAllString(root, "")
 }
 
 func Normalise(p string) string {
