@@ -30,6 +30,7 @@ var (
 func NewMemFS() *MemFS {
 	return &MemFS{
 		MapFS: fstest.MapFS{},
+		calc:  &nef.RelativeCalc{},
 	}
 }
 
