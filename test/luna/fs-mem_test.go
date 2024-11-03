@@ -15,11 +15,19 @@ var (
 	data = []byte("some content")
 )
 
-var _ = Describe("MemFs", func() {
+var _ = Describe("MemFS", func() {
 	var fS nef.UniversalFS
 
 	BeforeEach(func() {
 		fS = luna.NewMemFS()
+	})
+
+	Context("Calc", func() {
+		When("MemFS is created", func() {
+			It("🧪 should: also be created", func() {
+				Expect(fS.Calc()).NotTo(BeNil())
+			})
+		})
 	})
 
 	Context("Remove", func() {
