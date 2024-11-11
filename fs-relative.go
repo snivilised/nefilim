@@ -500,10 +500,6 @@ func newMutatorFS(rel *Rel) *mutatorFS {
 	}
 }
 
-func NewTraverseFS(rel Rel) TraverseFS {
-	return newMutatorFS(&rel)
-}
-
 func NewUniversalFS(rel Rel) UniversalFS {
 	return newMutatorFS(&rel)
 }

@@ -19,15 +19,6 @@ type (
 		Overwrite bool
 	}
 
-	// FileSystems contains the logical file systems required
-	// for navigation.
-	FileSystems struct {
-		// T is the file system that contains just the functionality required
-		// for traversal. It can also represent other file systems including afero,
-		// providing the appropriate adapters are in place.
-		T TraverseFS
-	}
-
 	// FSPathCalc the path calculator used by the FS
 	FSPathCalc interface {
 		Calc() PathCalc
@@ -143,14 +134,6 @@ type (
 		MoveFS
 		RemoveFS
 		RenameFS
-		WriteFileFS
-	}
-
-	// TraverseFS non streaming file system with reader and some
-	// writer capabilities
-	TraverseFS interface {
-		MakeDirFS
-		ReaderFS
 		WriteFileFS
 	}
 
