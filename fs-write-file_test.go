@@ -28,6 +28,7 @@ var _ = Describe("op: write-file", Ordered, func() {
 					Root:      root,
 					Overwrite: true,
 				})
+				Expect(fS.IsRelative()).To(BeTrue())
 			})
 
 			Context("op: WriteFile", func() {

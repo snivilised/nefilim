@@ -34,6 +34,9 @@ func NewWriterABS() WriterFS {
 func (f *absoluteFS) Calc() PathCalc {
 	return f.calc
 }
+func (f *absoluteFS) IsRelative() bool {
+	return false
+}
 
 // FileExists does file exist at the path specified
 func (f *absoluteFS) FileExists(name string) bool {

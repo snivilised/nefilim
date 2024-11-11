@@ -135,10 +135,9 @@ func NewExistsInFS(rel Rel) ExistsInFS {
 	return &ents.exists
 }
 
-func (f *existsInFS) Calc() PathCalc {
-	// disambiguator
-	return f.statFS.calc
-}
+// disambiguators
+func (f *existsInFS) Calc() PathCalc   { return f.statFS.calc }
+func (f *existsInFS) IsRelative() bool { return true }
 
 // FileExists does file exist at the path specified
 func (f *existsInFS) FileExists(name string) bool {
@@ -229,10 +228,9 @@ func NewMakeDirFS(rel Rel) MakeDirFS {
 	return &ents.writer
 }
 
-func (f *makeDirAllFS) Calc() PathCalc {
-	// disambiguator
-	return f.statFS.calc
-}
+// disambiguators
+func (f *makeDirAllFS) Calc() PathCalc   { return f.statFS.calc }
+func (f *makeDirAllFS) IsRelative() bool { return true }
 
 // Mkdir creates a new directory with the specified name and permission
 // bits (before umask).
@@ -411,10 +409,9 @@ type readerFS struct {
 	*statFS
 }
 
-func (f *readerFS) Calc() PathCalc {
-	// disambiguator
-	return f.statFS.calc
-}
+// disambiguators
+func (f *readerFS) Calc() PathCalc   { return f.statFS.calc }
+func (f *readerFS) IsRelative() bool { return true }
 
 // NewReaderFS
 func NewReaderFS(rel Rel) ReaderFS {
@@ -430,10 +427,9 @@ type aggregatorFS struct {
 	changer lazyChanger
 }
 
-func (f *aggregatorFS) Calc() PathCalc {
-	// disambiguator
-	return f.statFS.calc
-}
+// disambiguators
+func (f *aggregatorFS) Calc() PathCalc   { return f.statFS.calc }
+func (f *aggregatorFS) IsRelative() bool { return true }
 
 // Move is similar to rename but it has distinctly different semantics, which
 // also varies depending on whether the file system was created with overwrite
@@ -475,10 +471,9 @@ func NewWriterFS(rel Rel) WriterFS {
 	return &ents.writer
 }
 
-func (f *writerFS) Calc() PathCalc {
-	// disambiguator
-	return f.statFS.calc
-}
+// disambiguators
+func (f *writerFS) Calc() PathCalc   { return f.statFS.calc }
+func (f *writerFS) IsRelative() bool { return true }
 
 // 🎯 mutatorFS
 type mutatorFS struct {
@@ -486,10 +481,9 @@ type mutatorFS struct {
 	*writerFS
 }
 
-func (f *mutatorFS) Calc() PathCalc {
-	// disambiguator
-	return f.statFS.calc
-}
+// disambiguators
+func (f *mutatorFS) Calc() PathCalc   { return f.statFS.calc }
+func (f *mutatorFS) IsRelative() bool { return true }
 
 func newMutatorFS(rel *Rel) *mutatorFS {
 	ents := compose(sanitise(rel.Root)).mutate(rel.Overwrite)

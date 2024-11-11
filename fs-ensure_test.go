@@ -29,6 +29,7 @@ var _ = Describe("Ensure", Ordered, func() {
 		fS = nef.NewMakeDirFS(nef.Rel{
 			Root: root,
 		})
+		Expect(fS.IsRelative()).To(BeTrue())
 	})
 
 	DescribeTable("local-fs",
