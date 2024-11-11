@@ -19,14 +19,20 @@ type (
 		Overwrite bool
 	}
 
-	// FSPathCalc the path calculator used by the FS
-	FSPathCalc interface {
+	// FSUtility utilities associated with the FS
+	FSUtility interface {
+		// Calc is the path calculator used by the FS
 		Calc() PathCalc
+
+		// IsRelative determines if the methods invoked on the file
+		// system should use paths that are relative to a root specified
+		// when created.
+		IsRelative() bool
 	}
 
 	// ExistsInFS contains methods that check the existence of file system items.
 	ExistsInFS interface {
-		FSPathCalc
+		FSUtility
 		// FileExists does file exist at the path specified
 		FileExists(name string) bool
 
@@ -119,6 +125,7 @@ type (
 
 	// WriteFileFS file system non streaming writer
 	WriteFileFS interface {
+		FSUtility
 		// Create creates or truncates the named file.
 		Create(name string) (fs.File, error)
 		// Write writes file at path, to file system specified

@@ -28,6 +28,7 @@ var _ = Describe("op: make-dir/all", Ordered, func() {
 					Root:      root,
 					Overwrite: false,
 				})
+				Expect(fS.IsRelative()).To(BeTrue())
 				scratch(root)
 			})
 

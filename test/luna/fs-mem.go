@@ -38,6 +38,10 @@ func (f *MemFS) Calc() nef.PathCalc {
 	return f.calc
 }
 
+func (f *MemFS) IsRelative() bool {
+	return true
+}
+
 func (f *MemFS) FileExists(name string) bool {
 	if mapFile, found := f.MapFS[name]; found && !mapFile.Mode.IsDir() {
 		return true

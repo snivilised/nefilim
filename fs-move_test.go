@@ -38,6 +38,7 @@ var _ = Describe("op: move", Ordered, func() {
 					Root:      root,
 					Overwrite: overwrite,
 				})
+				Expect(fS.IsRelative()).To(BeTrue())
 				entry.overwrite = overwrite
 
 				if entry.arrange != nil {

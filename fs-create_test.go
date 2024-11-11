@@ -30,6 +30,7 @@ var _ = Describe("op: create", Ordered, func() {
 					Root:      root,
 					Overwrite: true,
 				})
+				Expect(fS.IsRelative()).To(BeTrue())
 			})
 
 			Context("op: Create", func() {
