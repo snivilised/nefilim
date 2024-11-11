@@ -17,13 +17,6 @@ func NewUniversalABS() UniversalFS {
 	}
 }
 
-// NewTraverseABS creates an absolute traverse file system
-func NewTraverseABS() TraverseFS {
-	return &absoluteFS{
-		calc: &AbsoluteCalc{},
-	}
-}
-
 // NewReaderABS creates an absolute reader file system
 func NewReaderABS() ReaderFS {
 	return &absoluteFS{

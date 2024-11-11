@@ -159,14 +159,4 @@ var _ = Describe("file systems", Ordered, func() {
 			})
 		})
 	})
-
-	Context("TraverseFS", func() {
-		Context("New", func() {
-			It("🧪 should: create", func() {
-				Expect(nef.NewTraverseFS(nef.Rel{
-					Root: root,
-				})).NotTo(BeNil())
-			})
-		})
-	})
 })
