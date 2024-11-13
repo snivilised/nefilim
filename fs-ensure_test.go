@@ -61,11 +61,11 @@ var _ = Describe("Ensure", Ordered, func() {
 						Name:    entry.target,
 						Default: lab.Static.FS.Ensure.Default.File,
 						Perm:    lab.Perms.Dir,
+						AsFile:  true,
 					},
 				)
 				Expect(err).To(Succeed())
-				_, file := fS.Calc().Split(lab.Static.FS.Ensure.Log.File)
-				Expect(result).To(Equal(file))
+				Expect(result).To(Equal(lab.Static.FS.Ensure.Log.File))
 			},
 		}),
 
@@ -85,10 +85,11 @@ var _ = Describe("Ensure", Ordered, func() {
 						Name:    entry.target,
 						Default: file,
 						Perm:    lab.Perms.Dir,
+						AsFile:  false,
 					},
 				)
 				Expect(err).To(Succeed())
-				Expect(result).To(Equal(file))
+				Expect(result).To(Equal(lab.Static.FS.Ensure.Default.File))
 			},
 		}),
 
@@ -116,8 +117,7 @@ var _ = Describe("Ensure", Ordered, func() {
 				Expect(err).To(Succeed())
 				ensureAt := lab.Static.FS.Ensure.Default.Directory
 				Expect(luna.AsDirectory(ensureAt)).To(luna.ExistInFS(fS))
-				_, file = fS.Calc().Split(entry.target)
-				Expect(result).To(Equal(file))
+				Expect(result).To(Equal(entry.target))
 			},
 		}),
 
@@ -144,7 +144,7 @@ var _ = Describe("Ensure", Ordered, func() {
 				Expect(err).To(Succeed())
 				ensureAt := lab.Static.FS.Ensure.Default.Directory
 				Expect(luna.AsDirectory(ensureAt)).To(luna.ExistInFS(fS))
-				Expect(result).To(Equal(file))
+				Expect(result).To(Equal(lab.Static.FS.Ensure.Default.File))
 			},
 		}),
 	)
@@ -187,14 +187,11 @@ var _ = Describe("Ensure", Ordered, func() {
 			home, _ := mocks.HomeFunc()
 			location := calc.Join(home, entry.relative)
 
-			if entry.directory {
-				location += string(filepath.Separator)
-			}
-
 			actual, err := fS.Ensure(nef.PathAs{
 				Name:    location,
 				Default: "default-test.log",
 				Perm:    lab.Perms.Dir,
+				AsFile:  entry.asFile,
 			})
 
 			directory, _ := calc.Split(actual)
@@ -214,14 +211,15 @@ var _ = Describe("Ensure", Ordered, func() {
 			should:   "create parent directory and return specified file path",
 			relative: filepath.Join("logs", "test.log"), // (can't use calc here, not set yet)
 			expected: "logs/test.log",
+			asFile:   true,
 		}),
 
 		Entry(nil, &ensureTE{
-			given:     "path is directory",
-			should:    "create parent directory and return default file path",
-			relative:  "logs/",
-			directory: true,
-			expected:  "logs/default-test.log",
+			given:    "path is directory",
+			should:   "create parent directory and return default file path",
+			relative: "logs",
+			asFile:   false,
+			expected: "logs/default-test.log",
 		}),
 	)
 })

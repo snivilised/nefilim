@@ -37,11 +37,11 @@ func (c CalcType) String() string {
 
 type (
 	ensureTE struct {
-		given     string
-		should    string
-		relative  string
-		expected  string
-		directory bool
+		given    string
+		should   string
+		relative string
+		expected string
+		asFile   bool
 	}
 
 	RPEntry struct {

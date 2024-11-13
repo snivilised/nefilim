@@ -3,7 +3,6 @@ package nef
 import (
 	"io/fs"
 	"os"
-	"strings"
 )
 
 type absoluteFS struct {
@@ -113,23 +112,37 @@ func (f *absoluteFS) MakeDirAll(name string, perm os.FileMode) error {
 	return os.MkdirAll(name, perm)
 }
 
-// Ensure is not currently implemented on absoluteFS
+// Ensure makes sure that a path exists at a particular location depending
+// on the value of as.AsFile.
+//
+// When as.AsFile=false: the path denoted by Name is interpreted as being a directory.
+// Name is created using os.MkdirAll. The returned value is Name joined with
+// the default.
+//
+// When as.AsFile=true: the path denoted by Name is interpreted as being a file.
+// The parent directory is created using os.MkdirAll. If the file denoted by
+// Name exists, then Name is returned, otherwise default is returned. So
+// the file denoted by Name is only returned if it already exists falling
+// back to the default specified.
 func (f *absoluteFS) Ensure(as PathAs) (at string, err error) {
 	var (
 		directory, file string
 	)
 	calc := f.calc
 
-	if strings.HasSuffix(as.Name, string(os.PathSeparator)) {
-		directory = as.Name
-		file = as.Default
-	} else {
+	if as.AsFile {
 		directory, file = calc.Split(as.Name)
+		err = f.MakeDirAll(directory, as.Perm)
+
+		if f.FileExists(as.Name) {
+			return as.Name, nil
+		}
+		return calc.Clean(calc.Join(directory, file)), err
 	}
 
-	if !f.DirectoryExists(directory) {
-		err = f.MakeDirAll(directory, as.Perm)
-	}
+	directory = as.Name
+	file = as.Default
+	err = f.MakeDirAll(directory, as.Perm)
 
 	return calc.Clean(calc.Join(directory, file)), err
 }
