@@ -267,19 +267,18 @@ func (f *makeDirAllFS) MakeDirAll(name string, perm os.FileMode) error {
 	return os.MkdirAll(path, perm)
 }
 
-// EnsurePathAt ensures that the specified path exists (including any non
-// existing intermediate directories). Given a path and a default filename,
-// the specified path is created in the following manner:
-// - If the path denotes a file (path does not end is a directory separator), then
-// the parent folder is created if it doesn't exist on the file-system provided.
-// - If the path denotes a directory, then that directory is created.
+// Ensure makes sure that a path exists at a particular location depending
+// on the value of as.AsFile.
 //
-// The returned string represents the file, so if the path specified was a
-// directory path, then the defaultFilename provided is joined to the path
-// and returned, otherwise the original path is returned un-modified.
-// Note: filepath.Join does not preserve a trailing separator, therefore to make sure
-// a path is interpreted as a directory and not a file, then the separator has
-// to be appended manually onto the end of the path.
+// When as.AsFile=false: the path denoted by Name is interpreted as being a directory.
+// Name is created using os.MkdirAll. The returned value is Name joined with
+// the default.
+//
+// When as.AsFile=true: the path denoted by Name is interpreted as being a file.
+// The parent directory is created using os.MkdirAll. If the file denoted by
+// Name exists, then Name is returned, otherwise default is returned. So
+// the file denoted by Name is only returned if it already exists falling
+// back to the default specified.
 func (f *makeDirAllFS) Ensure(as PathAs,
 ) (at string, err error) {
 	if !fs.ValidPath(as.Name) {
@@ -287,26 +286,25 @@ func (f *makeDirAllFS) Ensure(as PathAs,
 	}
 
 	var (
-		file string
+		directory, file string
 	)
-
-	if f.FileExists(as.Name) {
-		_, file = f.statFS.calc.Split(as.Name)
-
-		return file, nil
-	}
-
-	if f.DirectoryExists(as.Name) {
-		return as.Default, nil
-	}
+	calc := f.statFS.calc
 
 	if as.AsFile {
-		directory, file := SplitParent(as.Name)
+		directory, file = calc.Split(as.Name)
+		err = f.MakeDirAll(directory, as.Perm)
 
-		return file, f.MakeDirAll(directory, as.Perm)
+		if f.FileExists(as.Name) {
+			return as.Name, nil
+		}
+		return calc.Clean(calc.Join(directory, file)), err
 	}
 
-	return as.Default, f.MakeDirAll(as.Name, as.Perm)
+	directory = as.Name
+	file = as.Default
+	err = f.MakeDirAll(directory, as.Perm)
+
+	return calc.Clean(calc.Join(directory, file)), err
 }
 
 // 🎯 removeFS
