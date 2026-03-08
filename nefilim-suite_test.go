@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/onsi/ginkgo/v2" //nolint:revive // ok
-	. "github.com/onsi/gomega"    //nolint:revive // ok
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	nef "github.com/snivilised/nefilim"
 	lab "github.com/snivilised/nefilim/internal/laboratory"
 	"github.com/snivilised/nefilim/test/luna"
@@ -20,13 +20,17 @@ func TestNefilim(t *testing.T) {
 	RunSpecs(t, "Nefilim Suite")
 }
 
+// CalcType identifies whether path calculation is absolute or relative (used in tests).
 type CalcType uint
 
 const (
+	// CalcTypeAbsolute denotes host OS path semantics.
 	CalcTypeAbsolute CalcType = iota
+	// CalcTypeRelative denotes virtual FS path semantics with "/".
 	CalcTypeRelative
 )
 
+// String returns a human-readable label for the calc type (ABSOLUTE or RELATIVE).
 func (c CalcType) String() string {
 	if c == CalcTypeAbsolute {
 		return "ABSOLUTE"
@@ -44,18 +48,13 @@ type (
 		asFile   bool
 	}
 
+	// RPEntry holds a single test case for resolve-path tests (given, should, path, expect).
 	RPEntry struct {
 		given  string
 		should string
 		path   string
 		expect string
 	}
-
-	manyResultAction func(calc nef.PathCalc) []string
-
-	singleAsserter func(string)
-	manyAsserter   func([]string)
-	pairAsserter   func(string, string)
 
 	calcTE struct {
 		given  string
@@ -93,7 +92,6 @@ type (
 		note      string
 		op        string
 		overwrite bool
-		directory bool
 		require   string
 		target    string
 		from      string
@@ -135,7 +133,7 @@ func require(root, parent string, files ...string) error {
 			return fmt.Errorf("failed to create file: %q (%w)", name, err)
 		}
 
-		handle.Close()
+		handle.Close() //nolint:errcheck,gosec // ok
 	}
 
 	return nil
@@ -152,7 +150,7 @@ func requires(fS nef.WriterFS, root, parent string, files ...string) error {
 			return fmt.Errorf("failed to create file: %q (%w)", name, err)
 		}
 
-		handle.Close()
+		handle.Close() //nolint:errcheck,gosec // ok
 	}
 
 	return nil
@@ -182,34 +180,41 @@ func errorAbsResolver(_ string) (string, error) {
 	return "", errors.New("failed to resolve abs")
 }
 
+// Normalise replaces forward slashes with the OS path separator (for test output).
 func Normalise(p string) string {
 	return strings.ReplaceAll(p, "/", string(filepath.Separator))
 }
 
+// Because formats a failure message with the item name and reason.
 func Because(name, because string) string {
 	return fmt.Sprintf("❌ for item named: '%v', because: '%v'", name, because)
 }
 
+// Reason formats a failure message with the item name only.
 func Reason(name string) string {
 	return fmt.Sprintf("❌ for item named: '%v'", name)
 }
 
+// Log returns the path to the test log file in the repo.
 func Log() string {
 	return luna.Repo("Test/test.log")
 }
 
+// IsInvalidPathError asserts that err is an invalid path error, failing with reason if not.
 func IsInvalidPathError(err error, reason string) {
 	Expect(nef.IsInvalidPathError(err)).To(BeTrue(),
 		fmt.Sprintf("not NewInvalidPathError, %q", reason),
 	)
 }
 
+// IsSameDirectoryMoveRejectionError asserts that err is a same-directory move rejection, failing with reason if not.
 func IsSameDirectoryMoveRejectionError(err error, reason string) {
 	Expect(nef.IsRejectSameDirMoveError(err)).To(BeTrue(),
 		fmt.Sprintf("not SameDirectoryMoveRejectionError, %q", reason),
 	)
 }
 
+// IsDifferentDirectoryChangeRejectionError asserts that err is a different-directory change rejection, failing with reason if not.
 func IsDifferentDirectoryChangeRejectionError(err error, reason string) {
 	Expect(nef.IsRejectDifferentDirChangeError(err)).To(BeTrue(),
 		fmt.Sprintf("not DifferentDirectoryChangeRejectionError, %q", reason),

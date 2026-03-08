@@ -1,7 +1,7 @@
 package nef_test
 
 import (
-	. "github.com/onsi/ginkgo/v2" //nolint:revive // ok
+	. "github.com/onsi/ginkgo/v2"
 
 	nef "github.com/snivilised/nefilim"
 	"github.com/snivilised/nefilim/test/luna"

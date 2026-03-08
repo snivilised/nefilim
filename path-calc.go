@@ -5,7 +5,8 @@ import (
 	"strings"
 )
 
-// Path
+// PathCalc is the interface for path manipulation used by virtual file systems.
+// It uses "/" as the separator and does not depend on the host OS path separator.
 type PathCalc interface {
 	Base(path string) string
 	Clean(path string) string
@@ -16,6 +17,8 @@ type PathCalc interface {
 	Truncate(path string) string
 }
 
+// AbsoluteCalc implements PathCalc using the host OS path separator and
+// filepath semantics.
 type AbsoluteCalc struct {
 }
 
@@ -45,6 +48,8 @@ func (c *AbsoluteCalc) Split(path string) (dir, file string) {
 	return filepath.Split(path)
 }
 
+// Truncate removes a trailing path separator from path, if present;
+// otherwise returns path unchanged.
 func (c *AbsoluteCalc) Truncate(path string) string {
 	if path == "" {
 		return "."
@@ -61,6 +66,7 @@ func (c *AbsoluteCalc) Truncate(path string) string {
 	return path[:strings.LastIndex(path, separator)]
 }
 
+// Elements returns the path split into segments by the path separator.
 func (c *AbsoluteCalc) Elements(path string) []string {
 	if path == "" {
 		return []string{}
@@ -77,6 +83,8 @@ var (
 	separatorStr = string(separator)
 )
 
+// RelativeCalc implements PathCalc using "/" as the separator, for use with virtual FS paths.
+// Root can be set for context but is not used by the path operations.
 type RelativeCalc struct {
 	Root string
 }
@@ -110,6 +118,7 @@ func (c *RelativeCalc) Clean(path string) string {
 	return clean
 }
 
+// Elements returns the path split into segments by "/".
 func (c *RelativeCalc) Elements(path string) []string {
 	if path == "" {
 		return []string{}
@@ -149,6 +158,8 @@ func (c *RelativeCalc) Split(path string) (dir, file string) {
 	return c.Dir(path), c.Base(path)
 }
 
+// Truncate removes a trailing "/" from path, if present;
+// otherwise returns path unchanged.
 func (c *RelativeCalc) Truncate(path string) string {
 	if path == "" {
 		return "."
