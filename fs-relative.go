@@ -61,6 +61,7 @@ func (f *openFS) Calc() PathCalc {
 	return f.calc
 }
 
+// NewStatFS returns a file system rooted at rel.Root that supports Open and Stat.
 func NewStatFS(rel Rel) fs.StatFS {
 	ents := compose(sanitise(rel.Root))
 	return &ents.stat
@@ -77,7 +78,7 @@ type readDirFS struct {
 	*openFS
 }
 
-// NewReadDirFS creates a file system with read directory capability
+// NewReadDirFS creates a file system rooted at rel.Root with Open, Stat, and ReadDir.
 func NewReadDirFS(rel Rel) fs.ReadDirFS {
 	ents := compose(sanitise(rel.Root))
 
@@ -128,7 +129,7 @@ type existsInFS struct {
 	*queryStatusFS
 }
 
-// ExistsInFS
+// NewExistsInFS returns a file system rooted at rel.Root that can check FileExists and DirectoryExists.
 func NewExistsInFS(rel Rel) ExistsInFS {
 	ents := compose(sanitise(rel.Root))
 
@@ -172,6 +173,7 @@ type readFileFS struct {
 	*queryStatusFS
 }
 
+// NewReadFileFS returns a file system rooted at rel.Root that supports Open, Stat, ReadDir, and ReadFile.
 func NewReadFileFS(rel Rel) ReadFileFS {
 	ents := compose(sanitise(rel.Root))
 
@@ -187,7 +189,7 @@ func NewReadFileFS(rel Rel) ReadFileFS {
 // Otherwise ReadFile calls fs.Open and uses Read and Close
 // on the returned [File].
 func (f *readFileFS) ReadFile(name string) ([]byte, error) {
-	return fs.ReadFile(f.queryStatusFS.statFS.fS, name)
+	return fs.ReadFile(f.statFS.fS, name)
 }
 
 // 🧩 ---> file system mutation
@@ -221,7 +223,7 @@ type makeDirAllFS struct {
 	*existsInFS
 }
 
-// NewMakeDirFS
+// NewMakeDirFS returns a file system rooted at rel.Root that can create directories and ensure paths (MakeDir, MakeDirAll, Ensure).
 func NewMakeDirFS(rel Rel) MakeDirFS {
 	ents := compose(sanitise(rel.Root)).mutate(rel.Overwrite)
 
@@ -350,6 +352,7 @@ type writeFileFS struct {
 	*baseWriterFS
 }
 
+// NewWriteFileFS returns a file system rooted at rel.Root that supports Create and WriteFile; rel.Overwrite controls overwrite behaviour.
 func NewWriteFileFS(rel Rel) WriteFileFS {
 	ents := compose(sanitise(rel.Root)).mutate(rel.Overwrite)
 
@@ -365,9 +368,9 @@ func NewWriteFileFS(rel Rel) WriteFileFS {
 // We need to maintain conformity with apis in the standard library. Ideally,
 // this Create method would have the overwrite bool passed in as an argument,
 // but doing so would break standard lib compatibility. Instead, the underlying
-// implementation has to decide wether to Create on an override basis itself.
+// implementation has to decide whether to Create on an override basis itself.
 // The disadvantage of this approach is that the client can not decide on
-// the fly wether a call to Create is on a override basis or not. This decision
+// the fly whether a call to Create is on a override basis or not. This decision
 // has to be made at the point of creating the file system. This is less
 // flexible and just results in friction, but this is out of our power.
 func (f *writeFileFS) Create(name string) (fs.File, error) {
@@ -380,7 +383,7 @@ func (f *writeFileFS) Create(name string) (fs.File, error) {
 	}
 
 	path := f.calc.Join(f.root, name)
-	return os.Create(path)
+	return os.Create(path) //nolint:gosec // ok, pre-validated
 }
 
 // WriteFile writes data to the named file, creating it if necessary.
@@ -411,7 +414,7 @@ type readerFS struct {
 func (f *readerFS) Calc() PathCalc   { return f.statFS.calc }
 func (f *readerFS) IsRelative() bool { return true }
 
-// NewReaderFS
+// NewReaderFS returns a file system rooted at rel.Root with stat, read-dir, existence checks, and ReadFile.
 func NewReaderFS(rel Rel) ReaderFS {
 	ents := compose(sanitise(rel.Root))
 
@@ -426,7 +429,10 @@ type aggregatorFS struct {
 }
 
 // disambiguators
+// Calc returns the path calculator used by the file system.
 func (f *aggregatorFS) Calc() PathCalc   { return f.statFS.calc }
+
+// IsRelative returns true if the file system is relative.
 func (f *aggregatorFS) IsRelative() bool { return true }
 
 // Move is similar to rename but it has distinctly different semantics, which
@@ -445,6 +451,14 @@ func (f *aggregatorFS) Move(from, to string) error {
 	).move(from, to)
 }
 
+// Change is similar to move but it has distinctly different semantics, which
+// also varies depending on whether the file system was created with overwrite
+// enabled or not.
+// When overwrite is enabled, a change with overwrite the destination. If not
+// enabled, Change will return as error (os.ErrExist).
+// The paths denoted by from and to must be in different locations, otherwise
+// the change amounts to a move and the client should use Move instead of
+// change. When this scenario is detected, an error is returned.
 func (f *aggregatorFS) Change(from, to string) error {
 	return f.changer.instance(
 		f.existsInFS.queryStatusFS.statFS.root,
@@ -463,6 +477,8 @@ type writerFS struct {
 	*writeFileFS
 }
 
+// NewWriterFS returns a full write-capable file system rooted at rel.Root
+// (change, copy, make dir, move, remove, rename, write).
 func NewWriterFS(rel Rel) WriterFS {
 	ents := compose(sanitise(rel.Root)).mutate(rel.Overwrite)
 
@@ -470,17 +486,26 @@ func NewWriterFS(rel Rel) WriterFS {
 }
 
 // disambiguators
+// Calc returns the path calculator used by the file system.
+// IsRelative returns true if the file system is relative.
 func (f *writerFS) Calc() PathCalc   { return f.statFS.calc }
+
+// IsRelative returns true if the file system is relative.
 func (f *writerFS) IsRelative() bool { return true }
 
 // 🎯 mutatorFS
+// mutatorFS is a file system that combines a reader and writer file system.
 type mutatorFS struct {
 	*readerFS
 	*writerFS
 }
 
 // disambiguators
+// Calc returns the path calculator used by the file system.
+// IsRelative returns true if the file system is relative.
 func (f *mutatorFS) Calc() PathCalc   { return f.statFS.calc }
+
+// IsRelative returns true if the file system is relative.
 func (f *mutatorFS) IsRelative() bool { return true }
 
 func newMutatorFS(rel *Rel) *mutatorFS {
@@ -492,6 +517,8 @@ func newMutatorFS(rel *Rel) *mutatorFS {
 	}
 }
 
+// NewUniversalFS returns a file system rooted at rel.Root with
+// both read and write capabilities.
 func NewUniversalFS(rel Rel) UniversalFS {
 	return newMutatorFS(&rel)
 }
@@ -506,9 +533,6 @@ type (
 		query  queryStatusFS
 		exists existsInFS
 		reader readerFS
-		copy   copyFS
-		remove removeFS
-		rename renameFS
 		writer writerFS
 	}
 )

@@ -8,10 +8,6 @@ import (
 	"github.com/snivilised/nefilim/internal/third/lo"
 )
 
-const (
-	changeOpName = "Change"
-)
-
 type (
 	changer interface {
 		create() changer

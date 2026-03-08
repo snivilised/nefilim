@@ -67,7 +67,7 @@ func (f *absoluteFS) DirectoryExists(name string) bool {
 
 // Open
 func (f *absoluteFS) Open(name string) (fs.File, error) {
-	return os.Open(name)
+	return os.Open(name) //nolint:gosec // ok, pre-validated
 }
 
 // ReadFile reads the named file and returns the contents.
@@ -75,7 +75,7 @@ func (f *absoluteFS) Open(name string) (fs.File, error) {
 // Because ReadFile reads the whole file, it does not treat an EOF from Read
 // as an error to be reported.
 func (f *absoluteFS) ReadFile(name string) ([]byte, error) {
-	return os.ReadFile(name)
+	return os.ReadFile(name) //nolint:gosec // ok, pre-validated
 }
 
 // Stat returns a [FileInfo] describing the named file.
@@ -212,7 +212,7 @@ func (f *absoluteFS) Rename(from, to string) error {
 // be used for I/O; the associated file descriptor has mode O_RDWR.
 // If there is an error, it will be of type *PathError.
 func (f *absoluteFS) Create(name string) (fs.File, error) {
-	return os.Create(name)
+	return os.Create(name) //nolint:gosec // ok, pre-validated
 }
 
 // WriteFile writes data to the named file, creating it if necessary.

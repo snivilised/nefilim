@@ -4,8 +4,8 @@ import (
 	"io/fs"
 	"path/filepath"
 
-	. "github.com/onsi/ginkgo/v2" //nolint:revive // ok
-	. "github.com/onsi/gomega"    //nolint:revive // ok
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
 	nef "github.com/snivilised/nefilim"
 	"github.com/snivilised/nefilim/internal/third/lo"

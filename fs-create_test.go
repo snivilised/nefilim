@@ -3,8 +3,8 @@ package nef_test
 import (
 	"os"
 
-	. "github.com/onsi/ginkgo/v2" //nolint:revive // ok
-	. "github.com/onsi/gomega"    //nolint:revive // ok
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	nef "github.com/snivilised/nefilim"
 	lab "github.com/snivilised/nefilim/internal/laboratory"
 	"github.com/snivilised/nefilim/test/luna"
@@ -40,7 +40,7 @@ var _ = Describe("op: create", Ordered, func() {
 						name := lab.Static.FS.Create.Destination
 						file, err := fS.Create(name)
 						Expect(err).To(Succeed())
-						defer file.Close()
+						defer file.Close() //nolint:errcheck // ok
 
 						Expect(luna.AsFile(name)).To(luna.ExistInFS(fS))
 					})
@@ -54,7 +54,7 @@ var _ = Describe("op: create", Ordered, func() {
 						name := lab.Static.FS.Create.Destination
 						file, err := fS.Create(name)
 						Expect(err).To(Succeed())
-						defer file.Close()
+						defer file.Close() //nolint:errcheck // ok
 
 						Expect(luna.AsFile(name)).To(luna.ExistInFS(fS))
 					})

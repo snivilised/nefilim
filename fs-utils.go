@@ -22,6 +22,7 @@ func Parent(path string) string {
 	return path[:index]
 }
 
+// Join concatenates path segments with "/" for use in virtual file system paths.
 func Join(segments ...string) string {
 	// required so we can avoid the use of the file utilities defined
 	// in filepath, which are not appropriate for a relative file systems
