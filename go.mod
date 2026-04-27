@@ -3,7 +3,7 @@ module github.com/snivilised/nefilim
 go 1.26.0
 
 require (
-	github.com/onsi/ginkgo/v2 v2.28.1
+	github.com/onsi/ginkgo/v2 v2.28.2
 	github.com/onsi/gomega v1.39.1
 	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa
 )
